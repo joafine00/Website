@@ -1,95 +1,344 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Status de Servidores Minecraft</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel Universal – Status de Servidores Minecraft</title>
+  <meta name="description" content="Painel leve e detalhado, por partes, para consultar status de qualquer servidor Minecraft. Mostra evidências de país/hospedagem a partir de múltiplas fontes (IP geo), DNS e dados em tempo real da API do servidor. Sem gráfico nem lista de nicks." />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    details > summary { cursor: pointer; }
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen">
-  <div class="max-w-3xl mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-4">Status de Servidores Minecraft</h1>
-    <div class="mb-4">
-      <label class="mr-2">Host/IP:</label>
-      <input id="hostInput" class="border p-2 rounded" placeholder="ex.: mc.hypixel.net" value="mc.universocraft.com">
-      <button id="applyBtn" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Aplicar</button>
-    </div>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  <div class="max-w-5xl mx-auto p-4 sm:p-6">
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold">Painel Universal – Status de Servidores Minecraft</h1>
+        <p class="text-sm text-slate-600">Sem gráficos, sem lista de nicks. Atualização leve e organizada por partes.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="text-sm text-slate-600" for="hostInput">Host/IP:</label>
+        <input id="hostInput" class="px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="ex.: mc.hypixel.net" value="mc.universocraft.com" />
+        <label class="text-sm text-slate-600" for="intervalInput">Auto (s):</label>
+        <input id="intervalInput" type="number" min="15" step="15" class="w-24 px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" value="45" />
+        <label class="inline-flex items-center gap-2 text-sm text-slate-700 select-none">
+          <input id="autoToggle" type="checkbox" class="h-4 w-4" checked>
+          Auto
+        </label>
+        <button id="applyBtn" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white font-medium shadow hover:bg-indigo-500">Aplicar</button>
+        <button id="refreshBtn" class="px-4 py-2 rounded-2xl bg-slate-200 text-slate-900 font-medium hover:bg-slate-300">Atualizar</button>
+      </div>
+    </header>
 
-    <div id="statusSection" class="bg-white p-4 rounded shadow space-y-3">
-      <div><strong>Status:</strong> <span id="statusText">–</span></div>
-      <div><strong>Jogadores:</strong> <span id="playersNow">–</span> / <span id="playersMax">–</span></div>
-      <div><strong>Versão:</strong> <span id="version">–</span></div>
-      <div><strong>MOTD:</strong> <pre id="motd" class="whitespace-pre-wrap"></pre></div>
-      <div><strong>IP / Porta:</strong> <span id="ipPort">–</span></div>
-      <div><strong>Website oficial:</strong> <a id="website" href="#" target="_blank" class="text-blue-600 underline">–</a></div>
-      <div><strong>País / Hospedagem:</strong> <span id="hostingInfo">–</span></div>
-      <div><strong>Última atualização:</strong> <span id="lastUpdate">–</span></div>
-    </div>
+    <!-- Resumo rápido (sem afirmar país/hospedagem diretamente) -->
+    <section class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white rounded-2xl shadow p-4">
+        <div class="text-xs text-slate-500">Status</div>
+        <div id="statusText" class="text-2xl font-semibold">–</div>
+        <div class="text-xs text-slate-500 mt-1">Última atualização: <span id="lastUpdate">–</span></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-4">
+        <div class="text-xs text-slate-500">Jogadores</div>
+        <div class="text-2xl tabular-nums"><span id="playersNow">–</span> <span class="text-base text-slate-500">/ <span id="playersMax">–</span></span></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-4">
+        <div class="text-xs text-slate-500">Versão</div>
+        <div id="version" class="text-lg">–</div>
+        <div id="software" class="text-xs text-slate-500 mt-1"> </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-4">
+        <div class="text-xs text-slate-500">IP • Porta</div>
+        <div id="ipPort" class="text-lg">–</div>
+        <button id="copyBtn" class="mt-2 text-xs text-indigo-600 hover:underline">copiar</button>
+      </div>
+    </section>
+
+    <!-- Seções detalhadas por partes (evidências, sem afirmações diretas) -->
+    <section class="mt-6 space-y-4">
+      <details open class="bg-white rounded-2xl shadow p-4">
+        <summary class="font-semibold">1) Identificação do servidor</summary>
+        <div class="mt-3 grid gap-3 text-sm">
+          <div><span class="text-slate-500">Host consultado:</span> <code id="hostEcho" class="bg-slate-100 px-2 py-1 rounded">–</code></div>
+          <div>
+            <div class="text-slate-500">MOTD (mensagem do dia):</div>
+            <pre id="motd" class="whitespace-pre-wrap mt-1 text-slate-800"></pre>
+          </div>
+          <div class="text-slate-500">Possíveis sites relacionados (não verificados):</div>
+          <ul id="siteCandidates" class="list-disc list-inside"></ul>
+        </div>
+      </details>
+
+      <details class="bg-white rounded-2xl shadow p-4">
+        <summary class="font-semibold">2) DNS (DoH) – Evidências</summary>
+        <div class="mt-3 grid gap-3 text-sm">
+          <div>
+            <div class="text-slate-500">A/AAAA:</div>
+            <div id="dnsA" class="mt-1"></div>
+          </div>
+          <div>
+            <div class="text-slate-500">SRV (_minecraft._tcp):</div>
+            <div id="dnsSRV" class="mt-1"></div>
+          </div>
+          <div class="text-xs text-slate-500">Fonte: <a class="text-indigo-600 hover:underline" href="https://developers.google.com/speed/public-dns/docs/doh/json" target="_blank" rel="noopener">dns.google/resolve</a></div>
+        </div>
+      </details>
+
+      <details class="bg-white rounded-2xl shadow p-4">
+        <summary class="font-semibold">3) País &amp; Provedor – Evidências (múltiplas fontes)</summary>
+        <div class="mt-3 grid gap-4 md:grid-cols-3 text-sm" id="geoCards">
+          <!-- Cartões de evidência preenchidos via JS: ipwho.is, ip-api.com, ipapi.co -->
+        </div>
+        <div id="geoConsensus" class="mt-3 text-xs text-slate-600"></div>
+        <div class="text-xs text-slate-500 mt-2">Observação: mostramos <em>evidências</em> de cada fonte; elas podem divergir. Não afirmamos um país único automaticamente.</div>
+      </details>
+
+      <details class="bg-white rounded-2xl shadow p-4">
+        <summary class="font-semibold">4) Software, plugins/mods (quando disponíveis)</summary>
+        <div class="mt-3 text-sm" id="pluginsWrap">Sem dados expostos pelo servidor (query pode estar desativado).</div>
+        <div class="text-xs text-slate-500 mt-2">Fonte: <a class="text-indigo-600 hover:underline" href="https://api.mcsrvstat.us/" target="_blank" rel="noopener">api.mcsrvstat.us</a></div>
+      </details>
+    </section>
+
+    <footer class="mt-8 text-xs text-slate-500">
+      <p>Este painel é estático (HTML+JS). Para varrer fóruns/redes automaticamente, seria necessário um backend devido a CORS. Aqui usamos apenas fontes públicas com CORS liberado.</p>
+    </footer>
   </div>
 
   <script>
-    const API = "https://api.mcsrvstat.us/3/";
-    const GEOAPI = "https://ipwho.is/";
+    // =================== UTIL ===================
+    const $ = (id) => document.getElementById(id);
+    const hostInput = $('hostInput');
+    const applyBtn = $('applyBtn');
+    const refreshBtn = $('refreshBtn');
+    const autoToggle = $('autoToggle');
+    const intervalInput = $('intervalInput');
 
-    const hostInput = document.getElementById('hostInput');
-    const applyBtn = document.getElementById('applyBtn');
+    const statusText = $('statusText');
+    const playersNow = $('playersNow');
+    const playersMax = $('playersMax');
+    const versionEl = $('version');
+    const softwareEl = $('software');
+    const motdEl = $('motd');
+    const ipPortEl = $('ipPort');
+    const copyBtn = $('copyBtn');
+    const lastUpdate = $('lastUpdate');
+    const hostEcho = $('hostEcho');
 
-    const statusText = document.getElementById('statusText');
-    const playersNow = document.getElementById('playersNow');
-    const playersMax = document.getElementById('playersMax');
-    const versionEl = document.getElementById('version');
-    const motdEl = document.getElementById('motd');
-    const ipPortEl = document.getElementById('ipPort');
-    const websiteEl = document.getElementById('website');
-    const hostingEl = document.getElementById('hostingInfo');
-    const lastUpdate = document.getElementById('lastUpdate');
+    const dnsA = $('dnsA');
+    const dnsSRV = $('dnsSRV');
 
+    const siteCandidates = $('siteCandidates');
+
+    const geoCards = $('geoCards');
+    const geoConsensus = $('geoConsensus');
+
+    const pluginsWrap = $('pluginsWrap');
+
+    const API_STATUS = 'https://api.mcsrvstat.us/3/';
+    const DOH = 'https://dns.google/resolve?name=';
+
+    const GEO_SOURCES = [
+      { key: 'ipwhois', name: 'ipwho.is',  url: (ip) => `https://ipwho.is/${ip}`, parse: (j) => j && j.success ? {country: j.country, cc: j.country_code, isp: j.isp || j.connection?.isp, org: j.connection?.org || j.org, asn: (j.connection && j.connection.asn) ? `AS${j.connection.asn}` : (j.asn ? `AS${j.asn}` : undefined)} : null },
+      { key: 'ipapi',   name: 'ipapi.co',  url: (ip) => `https://ipapi.co/${ip}/json/`, parse: (j) => j && !j.error ? {country: j.country_name, cc: j.country, isp: j.org || j.asn, org: j.org, asn: j.asn} : null },
+      { key: 'ipapicom',name: 'ip-api.com',url: (ip) => `https://ip-api.com/json/${ip}?fields=status,country,countryCode,org,isp,as,query`, parse: (j) => j && j.status==='success' ? {country: j.country, cc: j.countryCode, isp: j.isp, org: j.org, asn: j.as && j.as.split(' ')[0]} : null },
+    ];
+
+    function withTimeout(promise, ms = 5000) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), ms);
+      return fetch(promise, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+    }
+
+    async function safeFetch(url, opts = {}, timeoutMs = 7000) {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), timeoutMs);
+      try { const res = await fetch(url, { ...opts, signal: ctrl.signal }); return res; }
+      catch (e) { return null; }
+      finally { clearTimeout(to); }
+    }
+
+    function escapeHTML(s) { return (s||'').toString().replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+    function tNow() { return new Date().toLocaleString(); }
+
+    function rootDomainFromHost(host) {
+      const parts = host.split('.');
+      if (parts.length <= 2) return host;
+      // heurística simples (não trata todos TLDs compostos)
+      return parts.slice(-2).join('.');
+    }
+
+    // =================== STATUS ===================
     async function fetchStatus(host) {
-      try {
-        const res = await fetch(API + encodeURIComponent(host));
-        const data = await res.json();
+      const url = API_STATUS + encodeURIComponent(host);
+      const res = await safeFetch(url, { cache: 'no-store' }, 7000);
+      if (!res || !res.ok) throw new Error('Falha na API de status');
+      return res.json();
+    }
 
-        statusText.textContent = data.online ? "Online" : "Offline";
-        playersNow.textContent = data.players?.online ?? 0;
-        playersMax.textContent = data.players?.max ?? "–";
-        versionEl.textContent = data.version || "–";
-        motdEl.textContent = (Array.isArray(data.motd?.clean) ? data.motd.clean.join("\n") : data.motd?.clean) || "";
-        ipPortEl.textContent = (data.ip || host) + (data.port ? ":" + data.port : "");
+    function renderStatus(data, host) {
+      const isOnline = !!data?.online;
+      statusText.textContent = isOnline ? 'Online' : 'Offline';
+      playersNow.textContent = isOnline && typeof data?.players?.online === 'number' ? data.players.online : 0;
+      playersMax.textContent = isOnline && typeof data?.players?.max === 'number' ? data.players.max : '–';
+      versionEl.textContent = data?.version || '–';
+      softwareEl.textContent = data?.software ? data.software : '';
+      motdEl.textContent = Array.isArray(data?.motd?.clean) ? data.motd.clean.join('\n') : (data?.motd?.clean || '');
 
-        websiteEl.href = "https://" + host;
-        websiteEl.textContent = host;
+      const ip = data?.ip || data?.hostname || host;
+      const port = data?.port ? `:${data.port}` : '';
+      ipPortEl.textContent = `${ip}${port}`;
+      copyBtn.onclick = async () => { try { await navigator.clipboard.writeText(`${ip}${port}`); copyBtn.textContent = 'copiado!'; setTimeout(()=>copyBtn.textContent='copiar',1200);} catch{} };
 
-        if (data.ip) fetchGeo(data.ip);
+      hostEcho.textContent = host;
+      lastUpdate.textContent = tNow();
 
-        lastUpdate.textContent = new Date().toLocaleString();
-      } catch {
-        statusText.textContent = "Erro ao buscar informações";
+      // Plugins/mods (quando disponíveis)
+      if (data?.plugins && Array.isArray(data.plugins.names) && data.plugins.names.length) {
+        const list = data.plugins.names.slice(0, 50).map(p=>`• ${escapeHTML(p)}`).join('\n');
+        pluginsWrap.textContent = '';
+        const pre = document.createElement('pre'); pre.className='whitespace-pre-wrap text-sm'; pre.textContent = list + (data.plugins.names.length>50?'\n(+ mais)':'');
+        pluginsWrap.appendChild(pre);
+      } else if (data?.mods && Array.isArray(data.mods.names) && data.mods.names.length) {
+        const list = data.mods.names.slice(0, 50).map(p=>`• ${escapeHTML(p)}`).join('\n');
+        pluginsWrap.textContent='';
+        const pre = document.createElement('pre'); pre.className='whitespace-pre-wrap text-sm'; pre.textContent = list + (data.mods.names.length>50?'\n(+ mais)':'');
+        pluginsWrap.appendChild(pre);
+      } else {
+        pluginsWrap.textContent = 'Sem dados expostos pelo servidor (query pode estar desativado).';
       }
     }
 
-    async function fetchGeo(ip) {
-      try {
-        const res = await fetch(GEOAPI + ip);
-        const geo = await res.json();
-        if (geo && geo.success) {
-          hostingEl.textContent = `${geo.country} • ${geo.isp || 'Hospedagem desconhecida'}`;
-        } else {
-          hostingEl.textContent = "Não disponível";
+    // =================== DNS (DoH) ===================
+    async function fetchDNSRecords(host) {
+      const [a, aaaa, srv] = await Promise.allSettled([
+        safeFetch(`${DOH}${encodeURIComponent(host)}&type=A`, {}, 6000),
+        safeFetch(`${DOH}${encodeURIComponent(host)}&type=AAAA`, {}, 6000),
+        safeFetch(`${DOH}${encodeURIComponent('_minecraft._tcp.'+host)}&type=SRV`, {}, 6000),
+      ]);
+      const res = { A: [], AAAA: [], SRV: [] };
+      async function parse(entry, key) {
+        if (entry.status !== 'fulfilled' || !entry.value || !entry.value.ok) return;
+        const j = await entry.value.json();
+        if (Array.isArray(j.Answer)) {
+          j.Answer.forEach(ans => {
+            if (key==='SRV') {
+              // SRV data format: priority weight port target
+              const parts = (ans.data||'').split(' ');
+              const port = parts[2];
+              const target = parts[3]?.replace(/\.$/, '');
+              res.SRV.push({ name: j.Name, port, target, ttl: ans.TTL });
+            } else {
+              res[key].push({ data: ans.data, ttl: ans.TTL });
+            }
+          });
         }
-      } catch {
-        hostingEl.textContent = "Não disponível";
+      }
+      await parse(a, 'A'); await parse(aaaa, 'AAAA'); await parse(srv, 'SRV');
+      return res;
+    }
+
+    function renderDNS(dns) {
+      const fmt = (arr) => arr.length ? `<ul class="list-disc list-inside">${arr.map(r=>`<li><code>${escapeHTML(r.data||(`${r.target}:${r.port}`))}</code> <span class='text-xs text-slate-500'>(TTL ${r.ttl||'-'})</span></li>`).join('')}</ul>` : '<span class="text-slate-500">Nada encontrado</span>';
+      dnsA.innerHTML = fmt([...dns.A, ...dns.AAAA]);
+      dnsSRV.innerHTML = dns.SRV.length ? `<ul class="list-disc list-inside">${dns.SRV.map(r=>`<li>destino <code>${escapeHTML(r.target)}</code> • porta <code>${escapeHTML(r.port)}</code> <span class='text-xs text-slate-500'>(TTL ${r.ttl||'-'})</span></li>`).join('')}</ul>` : '<span class="text-slate-500">Nada encontrado</span>';
+    }
+
+    // =================== GEO (múltiplas fontes) ===================
+    async function fetchGeoFromAll(ip) {
+      const results = await Promise.allSettled(GEO_SOURCES.map(src => safeFetch(src.url(ip), {}, 7000)));
+      const parsed = [];
+      for (let i=0;i<results.length;i++) {
+        const src = GEO_SOURCES[i];
+        const r = results[i];
+        if (r.status==='fulfilled' && r.value && r.value.ok) {
+          try { const j = await r.value.json(); const v = src.parse(j); if (v) parsed.push({ src: src.name, ...v }); }
+          catch {}
+        }
+      }
+      return parsed;
+    }
+
+    function renderGeoCards(list) {
+      geoCards.innerHTML='';
+      if (!list.length) { geoCards.innerHTML = '<div class="text-slate-500">Sem evidências disponíveis agora.</div>'; return; }
+      list.forEach(info => {
+        const div = document.createElement('div');
+        div.className = 'rounded-xl border border-slate-200 p-3 bg-slate-50';
+        div.innerHTML = `<div class="text-xs text-slate-500">Fonte: ${escapeHTML(info.src)}</div>
+                         <div class="text-base font-semibold">${escapeHTML(info.country||'–')} ${info.cc?`<span class='text-xs text-slate-500'>(${escapeHTML(info.cc)})</span>`:''}</div>
+                         <div class="text-sm">ISP/Org: ${escapeHTML(info.isp || info.org || '—')}</div>
+                         <div class="text-xs text-slate-500">ASN: ${escapeHTML(info.asn||'–')}</div>`;
+        geoCards.appendChild(div);
+      });
+
+      // consenso simples por país
+      const countBy = {};
+      list.forEach(i=>{ const k = i.cc || i.country || '??'; countBy[k]=(countBy[k]||0)+1; });
+      const entries = Object.entries(countBy).sort((a,b)=>b[1]-a[1]);
+      if (entries.length) {
+        const top = entries[0];
+        const agree = top[1], total = list.length;
+        geoConsensus.textContent = `Concordância entre fontes: ${agree}/${total} sugerem ${top[0]}.`;
+      } else {
+        geoConsensus.textContent = '';
       }
     }
 
-    applyBtn.onclick = () => {
-      const host = hostInput.value.trim();
-      if (!host) return;
-      fetchStatus(host);
-    };
+    // =================== Site/Links relacionados (heurística, sem afirmar) ===================
+    function renderSiteCandidates(host) {
+      const base = rootDomainFromHost(host);
+      const cands = Array.from(new Set([
+        `https://${base}/`,
+        `http://${base}/`,
+        `https://${host}/`,
+        `http://${host}/`
+      ]));
+      siteCandidates.innerHTML = cands.map(u=>`<li><a class="text-indigo-600 hover:underline" href="${u}" target="_blank" rel="noopener">${u}</a> <span class="text-xs text-slate-500">(não verificado)</span></li>`).join('');
+    }
 
-    // Atualiza automaticamente a cada 30s
-    setInterval(() => fetchStatus(hostInput.value.trim()), 30000);
-    fetchStatus(hostInput.value.trim());
+    // =================== LOOP ===================
+    let timer = null;
+    function schedule() {
+      if (timer) clearInterval(timer);
+      if (!autoToggle.checked) return;
+      const every = Math.max(15, parseInt(intervalInput.value||'45',10));
+      timer = setInterval(() => updateAll(hostInput.value.trim()), every*1000);
+    }
+
+    async function updateAll(host) {
+      if (!host) return;
+      hostEcho.textContent = host;
+      renderSiteCandidates(host);
+      try {
+        const [statusData, dns] = await Promise.all([
+          fetchStatus(host),
+          fetchDNSRecords(host)
+        ]);
+        renderStatus(statusData, host);
+        renderDNS(dns);
+        const ipForGeo = (statusData && statusData.ip) ? statusData.ip : (dns.A[0]?.data || null);
+        if (ipForGeo) {
+          const geoList = await fetchGeoFromAll(ipForGeo);
+          renderGeoCards(geoList);
+        } else {
+          renderGeoCards([]);
+        }
+      } catch (e) {
+        statusText.textContent = 'Erro ao consultar';
+      }
+    }
+
+    applyBtn.addEventListener('click', () => { updateAll(hostInput.value.trim()); schedule(); localStorage.setItem('mc_host', hostInput.value.trim()); });
+    refreshBtn.addEventListener('click', () => updateAll(hostInput.value.trim()));
+    autoToggle.addEventListener('change', schedule);
+    intervalInput.addEventListener('change', schedule);
+
+    // Init
+    const saved = localStorage.getItem('mc_host'); if (saved) hostInput.value = saved;
+    updateAll(hostInput.value.trim());
+    schedule();
   </script>
 </body>
 </html>
