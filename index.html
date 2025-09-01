@@ -1,22 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Server Status</title>
+  <title>Minecraft Server Status | UniversoCraft</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-  <div class="max-w-3xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center">Minecraft Server Status</h1>
+  <!-- Banner UniversoCraft -->
+  <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md text-center">
+    <h1 class="text-3xl font-bold">🌌 UniversoCraft</h1>
+    <p class="text-sm">Patrocinado pelo maior network de Minecraft em PT-BR</p>
+  </div>
 
-    <div class="flex gap-2 mb-4">
-      <input id="serverInput" type="text" placeholder="Enter server address (e.g. play.hypixel.net)" class="flex-1 border rounded p-2 text-black">
-      <button id="checkBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">Check</button>
-    </div>
+  <div class="max-w-3xl mx-auto p-6">
+    <h2 class="text-2xl font-semibold mb-6 text-center">Minecraft Server Status</h2>
+
+    <form id="serverForm" class="flex flex-col gap-2 mb-4" onsubmit="return false;">
+      <input id="serverInput" type="text" placeholder="Digite o IP do servidor (ex: play.hypixel.net)" class="flex-1 border rounded p-2 text-black">
+
+      <!-- Honeypot (campo escondido para bots) -->
+      <input type="text" id="hpfield" name="hpfield" style="display:none">
+
+      <button id="checkBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">Verificar</button>
+    </form>
 
     <div id="serverInfo" class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 hidden"></div>
   </div>
+
+  <footer class="bg-gray-800 text-gray-300 text-center p-4 mt-6">
+    <p>🌍 UniversoCraft © 2025 — Todos os direitos reservados</p>
+  </footer>
 
   <script>
     const API = 'https://api.mcsrvstat.us/2/';
@@ -24,25 +38,25 @@
     const input = document.getElementById('serverInput');
     const btn = document.getElementById('checkBtn');
     const info = document.getElementById('serverInfo');
+    const hpfield = document.getElementById('hpfield');
     let refreshInterval;
     let userCoords = null;
 
-    // Ask user for location
+    // Geolocalização
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        pos => {
-          userCoords = {
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude
-          };
-        },
-        err => {
-          console.warn("User denied location.");
-        }
+        pos => userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude },
+        () => console.warn("Localização não autorizada.")
       );
     }
 
     btn.addEventListener('click', () => {
+      // Anti-bot: se o honeypot estiver preenchido, bloqueia
+      if (hpfield.value.trim() !== "") {
+        alert("Bot detectado 🚫");
+        return;
+      }
+
       clearInterval(refreshInterval);
       fetchServer(input.value.trim());
       refreshInterval = setInterval(() => fetchServer(input.value.trim()), 30000);
@@ -64,7 +78,7 @@
     }
 
     function haversine(lat1, lon1, lat2, lon2) {
-      const R = 6371; // km
+      const R = 6371;
       const dLat = (lat2 - lat1) * Math.PI / 180;
       const dLon = (lon2 - lon1) * Math.PI / 180;
       const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -77,33 +91,28 @@
     function estimatePing(user, server) {
       if (!user || !server) return null;
       const dist = haversine(user.lat, user.lon, server.lat, server.lon);
-      // approx: 1 ms per 200 km + 30ms overhead
       return Math.round(dist / 200 + 30);
     }
 
     async function fetchServer(host) {
       if (!host) return;
-      info.innerHTML = '<p>Loading...</p>';
+      info.innerHTML = '<p>A carregar...</p>';
       info.classList.remove('hidden');
 
       try {
         const r = await fetch(API + encodeURIComponent(host));
-        if (!r.ok) throw new Error('Request failed');
+        if (!r.ok) throw new Error('Falha no pedido');
         const data = await r.json();
 
-        // Get server geo info
         let geoData = null;
         try {
           const g = await fetch(GEO + data.ip);
           if (g.ok) geoData = await g.json();
         } catch (e) {
-          console.warn("Geo lookup failed");
+          console.warn("Geo lookup falhou");
         }
 
-        // Use real ping if available and valid number
         let ping = (data.debug && typeof data.debug.ping === 'number') ? data.debug.ping : null;
-
-        // If no valid ping, estimate based on distance
         if (!ping && userCoords && geoData && geoData.lat && geoData.lon) {
           ping = estimatePing(userCoords, { lat: geoData.lat, lon: geoData.lon });
         }
@@ -112,19 +121,18 @@
           <h2 class="text-xl font-semibold mb-2">${host}</h2>
           <p>Status: ${data.online ? '<span class="text-green-500">Online</span>' : '<span class="text-red-500">Offline</span>'}</p>
           ${data.online ? `
-            <p>Players: ${data.players.online} / ${data.players.max}</p>
-            <p>Version: ${data.version || 'Unknown'}</p>
+            <p>Jogadores: ${data.players.online} / ${data.players.max}</p>
+            <p>Versão: ${data.version || 'Desconhecida'}</p>
             <p>MOTD: ${data.motd && data.motd.clean ? data.motd.clean.join('<br>') : ''}</p>
             <p>IP: ${data.ip}:${data.port}</p>
-            <div class="mt-2">Ping: ${ping ? renderPingBars(ping) : '<span class="text-gray-500">Not available</span>'}</div>
-            ${geoData ? `<p class="mt-2">🌍 Server location: ${geoData.country}, ${geoData.city}</p>` : ''}
-            ${userCoords ? `<p>📍 Your location: Lat ${userCoords.lat.toFixed(2)}, Lon ${userCoords.lon.toFixed(2)}</p>` : ''}
-            <p class="mt-2 text-sm text-gray-400">Last updated: ${new Date().toLocaleTimeString()}</p>
+            <div class="mt-2">Ping: ${ping ? renderPingBars(ping) : '<span class="text-gray-500">Não disponível</span>'}</div>
+            ${geoData ? `<p class="mt-2">🌍 Localização do servidor: ${geoData.country}, ${geoData.city}</p>` : ''}
+            ${userCoords ? `<p>📍 A tua localização: Lat ${userCoords.lat.toFixed(2)}, Lon ${userCoords.lon.toFixed(2)}</p>` : ''}
+            <p class="mt-2 text-sm text-gray-400">Última atualização: ${new Date().toLocaleTimeString()}</p>
           ` : ''}
         `;
-
       } catch (e) {
-        info.innerHTML = '<p class="text-red-500">Error fetching server info.</p>';
+        info.innerHTML = '<p class="text-red-500">Erro ao buscar informações do servidor.</p>';
       }
     }
   </script>
