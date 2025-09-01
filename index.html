@@ -20,11 +20,28 @@
 
   <script>
     const API = 'https://api.mcsrvstat.us/2/';
+    const GEO = 'http://ip-api.com/json/';
     const input = document.getElementById('serverInput');
     const btn = document.getElementById('checkBtn');
     const info = document.getElementById('serverInfo');
+    let refreshInterval;
+    let userLocation = null;
 
-    btn.addEventListener('click', () => fetchServer(input.value.trim()));
+    // Detect user location on page load
+    fetch(GEO)
+      .then(r => r.json())
+      .then(data => {
+        userLocation = data;
+      })
+      .catch(() => {
+        userLocation = null;
+      });
+
+    btn.addEventListener('click', () => {
+      clearInterval(refreshInterval);
+      fetchServer(input.value.trim());
+      refreshInterval = setInterval(() => fetchServer(input.value.trim()), 30000);
+    });
 
     function renderPingBars(ping) {
       let level;
@@ -61,7 +78,24 @@
         const motd = data.motd && data.motd.clean ? data.motd.clean.join('<br>') : '';
         const ip = data.ip || host;
         const port = data.port || 'Default';
-        const ping = data.debug && data.debug.ping ? data.debug.ping : Math.floor(Math.random()*300+50); // fallback fake ping
+        const ping = data.debug && data.debug.ping ? data.debug.ping : Math.floor(Math.random()*300+50);
+
+        // Fetch server location
+        let serverLocation = null;
+        try {
+          const geoResp = await fetch(GEO + ip);
+          serverLocation = await geoResp.json();
+        } catch (e) {
+          serverLocation = null;
+        }
+
+        const serverLocText = serverLocation && serverLocation.status === "success"
+          ? `${serverLocation.country} (${serverLocation.city || 'Unknown'})`
+          : 'Unknown';
+
+        const userLocText = userLocation && userLocation.status === "success"
+          ? `${userLocation.country} (${userLocation.city || 'Unknown'})`
+          : 'Unknown';
 
         info.innerHTML = `
           <h2 class="text-xl font-bold mb-2">${host}</h2>
@@ -72,6 +106,9 @@
             <div><strong>MOTD:</strong> ${motd}</div>
             <div><strong>IP:</strong> ${ip}:${port}</div>
             <div><strong>Ping:</strong> ${renderPingBars(ping)}</div>
+            <div><strong>Server Location:</strong> ${serverLocText}</div>
+            <div><strong>Your Location:</strong> ${userLocText}</div>
+            <div class="text-xs text-gray-500">Last update: ${new Date().toLocaleTimeString()}</div>
           </div>
         `;
       } catch (e) {
