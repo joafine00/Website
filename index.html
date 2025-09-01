@@ -1,326 +1,95 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Status Of Minecraft Server</title>
-  <meta name="description" content="Página simples que mostra, em tempo real, o status do servidor de minecraft (jogadores, versão, MOTD, lista de jogadores) e atualiza automaticamente." />
-
-  <!-- Tailwind via CDN -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Status de Servidores Minecraft</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js para histórico de jogadores -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-  <style>
-    /* Fonte suave para contadores grandes */
-    .tabular-nums { font-variant-numeric: tabular-nums; }
-    /* Avatar list scroll */
-    .player-list { scroll-snap-type: x mandatory; }
-    .player-item { scroll-snap-align: start; }
-  </style>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900">
-  <div class="max-w-6xl mx-auto p-4 sm:p-6">
-    <header class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-3">
-        <img id="serverIcon" alt="Ícone do servidor" class="h-12 w-12 rounded-2xl shadow" />
-        <div>
-          <h1 class="text-2xl font-bold">Server Status</h1>
-          <p class="text-sm text-slate-600">Atualiza automaticamente a cada <span id="intervalLabel">30</span>s • Fonte: api.mcsrvstat.us</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <label class="text-sm text-slate-600" for="hostInput">Host/IP:</label>
-        <input id="hostInput" class="px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="ex.: mc.universocraft.com" />
-        <label class="text-sm text-slate-600" for="intervalInput">Intervalo (s):</label>
-        <input id="intervalInput" type="number" min="5" step="5" class="w-24 px-3 py-2 rounded-xl border border-slate-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" value="30" />
-        <button id="applyBtn" class="px-4 py-2 rounded-2xl bg-indigo-600 text-white font-medium shadow hover:bg-indigo-500">Aplicar</button>
-      </div>
-    </header>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+  <div class="max-w-3xl mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-4">Status de Servidores Minecraft</h1>
+    <div class="mb-4">
+      <label class="mr-2">Host/IP:</label>
+      <input id="hostInput" class="border p-2 rounded" placeholder="ex.: mc.hypixel.net" value="mc.universocraft.com">
+      <button id="applyBtn" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded">Aplicar</button>
+    </div>
 
-    <main class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Card principal -->
-      <section class="lg:col-span-2 bg-white rounded-2xl shadow p-5">
-        <div class="flex flex-wrap items-center gap-3">
-          <span id="statusDot" class="inline-flex h-3 w-3 rounded-full bg-slate-300"></span>
-          <h2 class="text-xl font-semibold">Servidor</h2>
-          <span id="serverHost" class="text-slate-600"></span>
-        </div>
-        <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div class="p-4 bg-slate-50 rounded-xl">
-            <div class="text-xs text-slate-500">Jogadores</div>
-            <div class="text-3xl tabular-nums"><span id="playersNow">–</span> <span class="text-base text-slate-500">/ <span id="playersMax">–</span></span></div>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-xl">
-            <div class="text-xs text-slate-500">Status</div>
-            <div id="statusText" class="text-3xl font-semibold">–</div>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-xl">
-            <div class="text-xs text-slate-500">Versão</div>
-            <div id="version" class="text-lg">–</div>
-          </div>
-          <div class="p-4 bg-slate-50 rounded-xl">
-            <div class="text-xs text-slate-500">IP • Porta</div>
-            <div id="ipPort" class="text-lg">–</div>
-          </div>
-        </div>
-
-        <div class="mt-4">
-          <div class="text-xs text-slate-500">MOTD</div>
-          <p id="motd" class="mt-1 whitespace-pre-wrap"></p>
-        </div>
-
-        <div class="mt-6">
-          <canvas id="playersChart" height="120"></canvas>
-          <p class="mt-2 text-xs text-slate-500">Histórico local desde que você abriu a página (não é histórico oficial do servidor).</p>
-        </div>
-
-        <div class="mt-6">
-          <div class="flex items-center justify-between">
-            <h3 class="font-semibold">Amostra de jogadores online</h3>
-            <button id="togglePlayersBtn" class="text-sm text-indigo-600 hover:underline">Mostrar/ocultar</button>
-          </div>
-          <div id="playersWrap" class="mt-3 hidden overflow-x-auto">
-            <div id="playersList" class="flex gap-3 player-list"></div>
-          </div>
-        </div>
-
-        <p class="mt-6 text-xs text-slate-500">Última atualização: <span id="lastUpdate">–</span></p>
-      </section>
-
-      <!-- Card lateral -->
-      <aside class="bg-white rounded-2xl shadow p-5 space-y-4">
-        <h2 class="text-xl font-semibold">Atalhos úteis</h2>
-        <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
-          <li>IP do servidor: <code class="bg-slate-100 px-1 rounded" id="copyHost">–</code> <button id="copyBtn" class="ml-2 text-indigo-600 hover:underline">copiar</button></li>
-          <li>API pública usada: <a class="text-indigo-600 hover:underline" href="https://api.mcsrvstat.us/" target="_blank" rel="noopener">mcsrvstat.us</a></li>
-          <li>Este site é estático (apenas HTML + JS). Pode hospedar no GitHub Pages, Netlify, Vercel, etc.</li>
-        </ul>
-        <div class="border-t pt-4">
-          <h3 class="font-semibold mb-2">Dicas</h3>
-          <ul class="text-sm text-slate-700 list-disc list-inside space-y-1">
-            <li>Se o servidor usa outro domínio, troque no campo <em>Host/IP</em> e clique em <strong>Aplicar</strong>.</li>
-            <li>Se a lista de jogadores não aparecer, é porque o <em>query</em> pode estar desativado no servidor.</li>
-            <li>Para mais modos (ex.: SkyWars, BedWars), duplique esta página e mude o host de cada uma.</li>
-          </ul>
-        </div>
-      </aside>
-    </main>
+    <div id="statusSection" class="bg-white p-4 rounded shadow space-y-3">
+      <div><strong>Status:</strong> <span id="statusText">–</span></div>
+      <div><strong>Jogadores:</strong> <span id="playersNow">–</span> / <span id="playersMax">–</span></div>
+      <div><strong>Versão:</strong> <span id="version">–</span></div>
+      <div><strong>MOTD:</strong> <pre id="motd" class="whitespace-pre-wrap"></pre></div>
+      <div><strong>IP / Porta:</strong> <span id="ipPort">–</span></div>
+      <div><strong>Website oficial:</strong> <a id="website" href="#" target="_blank" class="text-blue-600 underline">–</a></div>
+      <div><strong>País / Hospedagem:</strong> <span id="hostingInfo">–</span></div>
+      <div><strong>Última atualização:</strong> <span id="lastUpdate">–</span></div>
+    </div>
   </div>
 
   <script>
-    // ======== CONFIG INICIAL ========
-    const DEFAULT_HOST = "mc.universocraft.com"; // Altere se for diferente
-    const API_BASE = "https://api.mcsrvstat.us/3/"; // v3 JSON
+    const API = "https://api.mcsrvstat.us/3/";
+    const GEOAPI = "https://ipwho.is/";
 
-    // Estado
-    let host = localStorage.getItem('uc_host') || DEFAULT_HOST;
-    let intervalSeconds = parseInt(localStorage.getItem('uc_interval') || '30', 10);
-    let timer = null;
-    let chart = null;
-    const historyData = []; // { t: Date, players: number }
+    const hostInput = document.getElementById('hostInput');
+    const applyBtn = document.getElementById('applyBtn');
 
-    // DOM refs
-    const elHostInput = document.getElementById('hostInput');
-    const elIntervalInput = document.getElementById('intervalInput');
-    const elApplyBtn = document.getElementById('applyBtn');
-    const elIntervalLabel = document.getElementById('intervalLabel');
+    const statusText = document.getElementById('statusText');
+    const playersNow = document.getElementById('playersNow');
+    const playersMax = document.getElementById('playersMax');
+    const versionEl = document.getElementById('version');
+    const motdEl = document.getElementById('motd');
+    const ipPortEl = document.getElementById('ipPort');
+    const websiteEl = document.getElementById('website');
+    const hostingEl = document.getElementById('hostingInfo');
+    const lastUpdate = document.getElementById('lastUpdate');
 
-    const elStatusDot = document.getElementById('statusDot');
-    const elStatusText = document.getElementById('statusText');
-    const elPlayersNow = document.getElementById('playersNow');
-    const elPlayersMax = document.getElementById('playersMax');
-    const elVersion = document.getElementById('version');
-    const elIpPort = document.getElementById('ipPort');
-    const elMotd = document.getElementById('motd');
-    const elServerHost = document.getElementById('serverHost');
-    const elLastUpdate = document.getElementById('lastUpdate');
-    const elServerIcon = document.getElementById('serverIcon');
-
-    const elCopyHost = document.getElementById('copyHost');
-    const elCopyBtn = document.getElementById('copyBtn');
-
-    const elPlayersWrap = document.getElementById('playersWrap');
-    const elPlayersList = document.getElementById('playersList');
-    const elTogglePlayersBtn = document.getElementById('togglePlayersBtn');
-
-    // Inicializa inputs
-    elHostInput.value = host;
-    elIntervalInput.value = intervalSeconds;
-    elIntervalLabel.textContent = intervalSeconds;
-
-    // Botão aplicar
-    elApplyBtn.addEventListener('click', () => {
-      const newHost = (elHostInput.value || '').trim();
-      const newInterval = Math.max(5, parseInt(elIntervalInput.value || '30', 10));
-      if (!newHost) return alert('Informe um host ou IP.');
-      host = newHost;
-      intervalSeconds = newInterval;
-      localStorage.setItem('uc_host', host);
-      localStorage.setItem('uc_interval', String(intervalSeconds));
-      elIntervalLabel.textContent = intervalSeconds;
-      restartPolling();
-      updateOnce();
-    });
-
-    // Copiar host
-    elCopyBtn.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(host); alert('Host copiado!'); }
-      catch { alert('Não foi possível copiar.'); }
-    });
-
-    // Mostrar/Ocultar lista de jogadores
-    elTogglePlayersBtn.addEventListener('click', () => {
-      elPlayersWrap.classList.toggle('hidden');
-    });
-
-    // ======== FETCH STATUS ========
-    async function fetchStatus() {
-      const url = API_BASE + encodeURIComponent(host);
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error('Falha ao consultar API');
-      return await res.json();
-    }
-
-    function setOnlineUI(isOnline) {
-      elStatusDot.className = `inline-flex h-3 w-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`;
-      elStatusText.textContent = isOnline ? 'Online' : 'Offline';
-    }
-
-    function formatMotd(motd) {
-      if (!motd) return '';
-      if (Array.isArray(motd.clean)) return motd.clean.join('\n');
-      if (Array.isArray(motd.html)) return motd.html.map(s => s.replace(/<[^>]*>/g, '')).join('\n');
-      return String(motd); 
-    }
-
-    function updateUI(data) {
-      const isOnline = !!data.online;
-      setOnlineUI(isOnline);
-
-      elServerHost.textContent = host;
-      elCopyHost.textContent = host;
-
-      const playersNow = isOnline && data.players && typeof data.players.online === 'number' ? data.players.online : 0;
-      const playersMax = isOnline && data.players && typeof data.players.max === 'number' ? data.players.max : 0;
-      elPlayersNow.textContent = playersNow;
-      elPlayersMax.textContent = playersMax || '–';
-
-      elVersion.textContent = isOnline && data.version ? data.version : '–';
-      const ip = data.ip || data.hostname || host;
-      const port = data.port ? `:${data.port}` : '';
-      elIpPort.textContent = `${ip}${port}`;
-
-      elMotd.textContent = formatMotd(data.motd);
-
-      // Ícone do servidor
-      if (data.icon) {
-        elServerIcon.src = data.icon; // já vem como data:image/png;base64
-      } else {
-        elServerIcon.src = 'https://api.iconify.design/mdi:minecraft.svg?color=%2388a';
-      }
-
-      // Lista de jogadores (se disponível via query)
-      elPlayersList.innerHTML = '';
-      const list = data.players && Array.isArray(data.players.list) ? data.players.list : [];
-      if (list.length) {
-        list.slice(0, 100).forEach(name => {
-          const card = document.createElement('div');
-          card.className = 'player-item flex items-center gap-3 bg-slate-50 rounded-xl p-2 pr-4 shadow-sm';
-          const img = document.createElement('img');
-          img.className = 'h-8 w-8 rounded-lg';
-          img.alt = `${name} skin`;
-          img.src = `https://minotar.net/helm/${encodeURIComponent(name)}/64.png`;
-          const span = document.createElement('span');
-          span.textContent = name;
-          card.appendChild(img);
-          card.appendChild(span);
-          elPlayersList.appendChild(card);
-        });
-      } else {
-        const empty = document.createElement('div');
-        empty.className = 'text-sm text-slate-500';
-        empty.textContent = 'Sem amostra de jogadores neste momento.';
-        elPlayersList.appendChild(empty);
-      }
-
-      // Atualiza "Última atualização"
-      elLastUpdate.textContent = new Date().toLocaleString();
-
-      // Histórico para o gráfico
-      pushHistory(playersNow);
-    }
-
-    function pushHistory(value) {
-      const now = new Date();
-      historyData.push({ t: now, players: value });
-      // Mantém no máximo 200 pontos (~100min se 30s)
-      if (historyData.length > 200) historyData.shift();
-      updateChart();
-    }
-
-    function initChart() {
-      const ctx = document.getElementById('playersChart');
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Jogadores online',
-            data: [],
-            tension: 0.3,
-            borderWidth: 2,
-            pointRadius: 0,
-            fill: false
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { display: true, ticks: { maxRotation: 0, autoSkip: true } },
-            y: { beginAtZero: true }
-          },
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
-
-    function updateChart() {
-      if (!chart) return;
-      chart.data.labels = historyData.map(p => p.t.toLocaleTimeString());
-      chart.data.datasets[0].data = historyData.map(p => p.players);
-      chart.update();
-    }
-
-    async function updateOnce() {
+    async function fetchStatus(host) {
       try {
-        const data = await fetchStatus();
-        updateUI(data);
-      } catch (err) {
-        console.error(err);
-        setOnlineUI(false);
-        elMotd.textContent = '';
-        elPlayersNow.textContent = '0';
-        elPlayersMax.textContent = '–';
-        elVersion.textContent = '–';
-        elIpPort.textContent = host;
-        elLastUpdate.textContent = new Date().toLocaleString();
-        pushHistory(0);
+        const res = await fetch(API + encodeURIComponent(host));
+        const data = await res.json();
+
+        statusText.textContent = data.online ? "Online" : "Offline";
+        playersNow.textContent = data.players?.online ?? 0;
+        playersMax.textContent = data.players?.max ?? "–";
+        versionEl.textContent = data.version || "–";
+        motdEl.textContent = (Array.isArray(data.motd?.clean) ? data.motd.clean.join("\n") : data.motd?.clean) || "";
+        ipPortEl.textContent = (data.ip || host) + (data.port ? ":" + data.port : "");
+
+        websiteEl.href = "https://" + host;
+        websiteEl.textContent = host;
+
+        if (data.ip) fetchGeo(data.ip);
+
+        lastUpdate.textContent = new Date().toLocaleString();
+      } catch {
+        statusText.textContent = "Erro ao buscar informações";
       }
     }
 
-    function restartPolling() {
-      if (timer) clearInterval(timer);
-      timer = setInterval(updateOnce, intervalSeconds * 1000);
+    async function fetchGeo(ip) {
+      try {
+        const res = await fetch(GEOAPI + ip);
+        const geo = await res.json();
+        if (geo && geo.success) {
+          hostingEl.textContent = `${geo.country} • ${geo.isp || 'Hospedagem desconhecida'}`;
+        } else {
+          hostingEl.textContent = "Não disponível";
+        }
+      } catch {
+        hostingEl.textContent = "Não disponível";
+      }
     }
 
-    // ======== STARTUP ========
-    (function init() {
-      initChart();
-      restartPolling();
-      updateOnce();
-    })();
+    applyBtn.onclick = () => {
+      const host = hostInput.value.trim();
+      if (!host) return;
+      fetchStatus(host);
+    };
+
+    // Atualiza automaticamente a cada 30s
+    setInterval(() => fetchStatus(hostInput.value.trim()), 30000);
+    fetchStatus(hostInput.value.trim());
   </script>
 </body>
 </html>
