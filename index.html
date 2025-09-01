@@ -1,27 +1,50 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Painel de Status - Servidores Minecraft</title>
+  <title>Minecraft Server Status</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen">
-  <div class="max-w-xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center">Status de Servidor Minecraft</h1>
+<body class="bg-gray-50 text-gray-900 min-h-screen transition-colors duration-300" id="bodyEl">
+  <div class="max-w-2xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">Minecraft Server Status</h1>
 
     <div class="mb-6 flex gap-2">
-      <input id="hostInput" class="flex-1 border p-2 rounded" placeholder="ex.: mc.hypixel.net" value="mc.universocraft.com">
-      <button id="applyBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Verificar</button>
+      <input id="hostInput" class="flex-1 border p-2 rounded" placeholder="e.g. mc.hypixel.net" value="mc.universocraft.com">
+      <button id="applyBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Check</button>
     </div>
 
-    <div id="statusSection" class="bg-white p-4 rounded shadow space-y-3">
-      <div><strong>Status:</strong> <span id="statusText">–</span></div>
-      <div><strong>Jogadores:</strong> <span id="playersNow">–</span> / <span id="playersMax">–</span></div>
-      <div><strong>Versão:</strong> <span id="version">–</span></div>
+    <div class="flex justify-between items-center mb-4">
+      <label for="refreshRate">Refresh every:</label>
+      <select id="refreshRate" class="border rounded p-1">
+        <option value="30000">30s</option>
+        <option value="60000">1m</option>
+        <option value="300000">5m</option>
+      </select>
+      <button id="themeToggle" class="ml-auto bg-gray-300 dark:bg-gray-700 px-3 py-1 rounded">Toggle Theme</button>
+    </div>
+
+    <div id="statusSection" class="bg-white dark:bg-gray-800 p-4 rounded shadow space-y-3">
+      <div class="flex items-center gap-2">
+        <img id="favicon" src="" alt="Server Icon" class="w-8 h-8 rounded">
+        <div><strong>Status:</strong> <span id="statusText">–</span></div>
+      </div>
+      <div><strong>Players:</strong> <span id="playersNow">–</span> / <span id="playersMax">–</span></div>
+      <div><strong>Ping:</strong> <span id="ping">–</span> ms</div>
+      <div><strong>Version:</strong> <span id="version">–</span></div>
+      <div><strong>Protocol:</strong> <span id="protocol">–</span></div>
+      <div><strong>Software:</strong> <span id="software">–</span></div>
+      <div><strong>Plugins:</strong> <span id="plugins">–</span></div>
       <div><strong>MOTD:</strong> <pre id="motd" class="whitespace-pre-wrap"></pre></div>
-      <div><strong>IP / Porta:</strong> <span id="ipPort">–</span></div>
-      <div><strong>Última atualização:</strong> <span id="lastUpdate">–</span></div>
+      <div class="flex items-center gap-2">
+        <strong>IP / Port:</strong> <span id="ipPort">–</span>
+        <button id="copyIpBtn" class="bg-blue-600 text-white text-sm px-2 py-1 rounded">Copy</button>
+      </div>
+      <div><strong>NameMC:</strong> <a id="namemcLink" href="#" target="_blank" class="text-blue-600 underline">–</a></div>
+      <div><strong>Minecraft-MP:</strong> <a id="mcMpLink" href="#" target="_blank" class="text-blue-600 underline">–</a></div>
+      <div><strong>Last update:</strong> <span id="lastUpdate">–</span></div>
+      <div><strong>Checked:</strong> <span id="timeAgo">–</span> ago</div>
     </div>
   </div>
 
@@ -33,10 +56,31 @@
     const statusText = document.getElementById('statusText');
     const playersNow = document.getElementById('playersNow');
     const playersMax = document.getElementById('playersMax');
+    const pingEl = document.getElementById('ping');
     const versionEl = document.getElementById('version');
+    const protocolEl = document.getElementById('protocol');
+    const softwareEl = document.getElementById('software');
+    const pluginsEl = document.getElementById('plugins');
     const motdEl = document.getElementById('motd');
     const ipPortEl = document.getElementById('ipPort');
     const lastUpdate = document.getElementById('lastUpdate');
+    const timeAgoEl = document.getElementById('timeAgo');
+    const namemcLink = document.getElementById('namemcLink');
+    const mcMpLink = document.getElementById('mcMpLink');
+    const faviconEl = document.getElementById('favicon');
+    const copyIpBtn = document.getElementById('copyIpBtn');
+    const refreshRateSelect = document.getElementById('refreshRate');
+    const themeToggle = document.getElementById('themeToggle');
+    const bodyEl = document.getElementById('bodyEl');
+
+    let refreshInterval;
+    let lastCheckTime;
+
+    function updateTimeAgo() {
+      if (!lastCheckTime) return;
+      const seconds = Math.floor((Date.now() - lastCheckTime) / 1000);
+      timeAgoEl.textContent = seconds + "s";
+    }
 
     async function fetchStatus(host) {
       try {
@@ -46,12 +90,24 @@
         statusText.textContent = data.online ? "Online" : "Offline";
         playersNow.textContent = data.players?.online ?? 0;
         playersMax.textContent = data.players?.max ?? "–";
+        pingEl.textContent = data.debug?.ping ?? "–";
         versionEl.textContent = data.version || "–";
+        protocolEl.textContent = data.protocol || "–";
+        softwareEl.textContent = data.software || "–";
+        pluginsEl.textContent = data.plugins ? data.plugins.join(", ") : "–";
         motdEl.textContent = (Array.isArray(data.motd?.clean) ? data.motd.clean.join("\n") : data.motd?.clean) || "";
         ipPortEl.textContent = (data.ip || host) + (data.port ? ":" + data.port : "");
+        namemcLink.href = `https://namemc.com/server/${host}`;
+        namemcLink.textContent = host;
+        mcMpLink.href = `https://minecraft-mp.com/server-s/${host}`;
+        mcMpLink.textContent = host;
+        faviconEl.src = data.icon ? `data:image/png;base64,${data.icon}` : "";
+
         lastUpdate.textContent = new Date().toLocaleString();
+        lastCheckTime = Date.now();
+        updateTimeAgo();
       } catch {
-        statusText.textContent = "Erro ao buscar informações";
+        statusText.textContent = "Error fetching information";
       }
     }
 
@@ -61,8 +117,27 @@
       fetchStatus(host);
     };
 
-    // Atualiza automaticamente a cada 30s
-    setInterval(() => fetchStatus(hostInput.value.trim()), 30000);
+    copyIpBtn.onclick = () => {
+      navigator.clipboard.writeText(ipPortEl.textContent);
+      copyIpBtn.textContent = "Copied!";
+      setTimeout(() => copyIpBtn.textContent = "Copy", 2000);
+    };
+
+    refreshRateSelect.onchange = () => {
+      clearInterval(refreshInterval);
+      refreshInterval = setInterval(() => fetchStatus(hostInput.value.trim()), parseInt(refreshRateSelect.value));
+    };
+
+    themeToggle.onclick = () => {
+      bodyEl.classList.toggle("dark");
+      bodyEl.classList.toggle("bg-gray-900");
+      bodyEl.classList.toggle("text-white");
+    };
+
+    // Auto-refresh
+    refreshInterval = setInterval(() => fetchStatus(hostInput.value.trim()), parseInt(refreshRateSelect.value));
+    setInterval(updateTimeAgo, 1000);
+
     fetchStatus(hostInput.value.trim());
   </script>
 </body>
