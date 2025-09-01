@@ -100,10 +100,10 @@
           console.warn("Geo lookup failed");
         }
 
-        // Use real ping if available
-        let ping = data.debug && data.debug.ping ? data.debug.ping : null;
+        // Use real ping if available and valid number
+        let ping = (data.debug && typeof data.debug.ping === 'number') ? data.debug.ping : null;
 
-        // If no ping, estimate based on distance
+        // If no valid ping, estimate based on distance
         if (!ping && userCoords && geoData && geoData.lat && geoData.lon) {
           ping = estimatePing(userCoords, { lat: geoData.lat, lon: geoData.lon });
         }
