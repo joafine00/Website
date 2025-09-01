@@ -140,5 +140,156 @@
 
     fetchStatus(hostInput.value.trim());
   </script>
+
+  <section class="max-w-5xl mx-auto p-6">
+    <h2 class="text-2xl font-bold mt-10 mb-4 text-center">Top hosts by country (animated)</h2>
+
+    <p class="text-sm text-gray-600 dark:text-gray-300 mb-3 text-center">Paste a list of servers (one per line), then scan. We will resolve each server, geolocate its IP via public APIs, and compute who appears most often per country. No scraping required.</p>
+
+    <div class="grid gap-3 md:grid-cols-2">
+      <textarea id="bulkHosts" class="border rounded p-3 min-h-[160px]" placeholder="e.g.
+mc.hypixel.net
+mc.universocraft.com
+play.cubecraft.net
+play.mineplex.net
+..."></textarea>
+      <div class="flex flex-col gap-2">
+        <button id="scanBtn" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded">Scan servers</button>
+        <div class="text-xs text-gray-500">Tips:
+          <ul class="list-disc list-inside">
+            <li>Large lists are ok; we throttle requests automatically.</li>
+            <li>Results depend on servers being online and geolocation accuracy.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="scanProgress" class="mt-3 text-sm text-gray-600 dark:text-gray-300">Idle.</div>
+
+    <div id="leaderboardWrap" class="mt-6 grid gap-4 md:grid-cols-2">
+      <!-- Dynamic country leaderboards appear here -->
+    </div>
+  </section>
+
+  <style>
+    /* Simple, lightweight animations */
+    .fade-in { opacity: 0; transform: translateY(6px); animation: fadeInUp .5s ease forwards; }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    .count-burst { animation: pop .3s ease; }
+    @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
+    .shimmer { position: relative; overflow: hidden; }
+    .shimmer::after{ content:""; position:absolute; top:0; left:-150%; width:50%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: shimmer 1.2s infinite; }
+    @keyframes shimmer{ 0%{left:-150%} 100%{left:150%} }
+  </style>
+
+  <script>
+    // ====== NEW: Animated Top Hosts by Country ======
+    const bulkHosts = document.getElementById('bulkHosts');
+    const scanBtn = document.getElementById('scanBtn');
+    const scanProgress = document.getElementById('scanProgress');
+    const leaderboardWrap = document.getElementById('leaderboardWrap');
+
+    // Helper: throttle concurrency
+    async function mapLimit(items, limit, iterator) {
+      const ret = []; let i = 0; const executing = [];
+      while (i < items.length) {
+        const p = Promise.resolve().then(() => iterator(items[i], i++));
+        ret.push(p);
+        if (limit <= items.length) {
+          const e = p.then(() => executing.splice(executing.indexOf(e), 1));
+          executing.push(e);
+          if (executing.length >= limit) await Promise.race(executing);
+        }
+      }
+      return Promise.allSettled(ret);
+    }
+
+    function normalizeList(text){
+      return Array.from(new Set(text.split(/
++/).map(s=>s.trim()).filter(Boolean)));
+    }
+
+    function updateProgress(done, total){
+      scanProgress.textContent = `Processing ${done}/${total}…`;
+    }
+
+    function renderCountryBoards(countryMap){
+      leaderboardWrap.innerHTML = '';
+      const countries = Object.keys(countryMap).sort((a,b)=> countryMap[b].total - countryMap[a].total);
+      countries.forEach((cc, idx)=>{
+        const info = countryMap[cc];
+        const top = Object.entries(info.isps).sort((a,b)=> b[1]-a[1]);
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-gray-800 rounded-2xl shadow p-4 fade-in';
+        card.style.animationDelay = `${Math.min(idx*80,600)}ms`;
+        const rows = top.slice(0,5).map(([isp,count],i)=>{
+          const barPct = Math.round((count/info.total)*100);
+          return `<div class="mt-2">
+            <div class="flex justify-between text-sm"><span>${i+1}. ${isp}</span><span class="font-semibold">${count}</span></div>
+            <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded">
+              <div class="h-2 bg-blue-600 rounded count-burst" style="width:${barPct}%;"></div>
+            </div>
+          </div>`;
+        }).join('');
+        card.innerHTML = `
+          <div class="text-xs text-gray-500">Country</div>
+          <div class="text-xl font-bold">${info.countryName} <span class="text-sm text-gray-500">(${cc})</span></div>
+          <div class="text-xs text-gray-500 mt-1">Servers seen: <span class="font-semibold">${info.total}</span></div>
+          <div class="mt-2">${rows || '<div class="text-sm text-gray-500">No ISP data</div>'}</div>
+        `;
+        leaderboardWrap.appendChild(card);
+      });
+    }
+
+    async function resolveServer(host){
+      // 1) resolve + status (for IP)
+      try {
+        const r = await fetch(`${API}${encodeURIComponent(host)}`);
+        if (!r.ok) return null;
+        const j = await r.json();
+        const ip = j && (j.ip || j.hostname || null);
+        const port = j && j.port;
+        return { ip, port, ok: !!j.online, raw:j };
+      } catch { return null; }
+    }
+
+    async function geoLookup(ip){
+      // Use ip-api.com (fast, CORS ok)
+      try {
+        const r = await fetch(`https://ip-api.com/json/${ip}?fields=status,country,countryCode,org,isp,as,query`);
+        if (!r.ok) return null;
+        const j = await r.json();
+        if (j.status !== 'success') return null;
+        return { cc: j.countryCode, country: j.country, isp: j.isp || j.org || (j.as||'').split(' ').slice(1).join(' ') || 'Unknown' };
+      } catch { return null; }
+    }
+
+    async function scanAll(){
+      const hosts = normalizeList(bulkHosts.value);
+      if (!hosts.length){ scanProgress.textContent = 'Please paste at least one host.'; return; }
+      leaderboardWrap.innerHTML = '';
+      scanProgress.textContent = 'Starting…';
+
+      const countryMap = {}; let done = 0;
+      await mapLimit(hosts, 6, async (host)=>{
+        const res = await resolveServer(host);
+        if (res && res.ip){
+          const g = await geoLookup(res.ip);
+          if (g){
+            const cc = g.cc || '??';
+            if (!countryMap[cc]) countryMap[cc] = { countryName: g.country || cc, total: 0, isps: {} };
+            countryMap[cc].total += 1;
+            countryMap[cc].isps[g.isp] = (countryMap[cc].isps[g.isp]||0)+1;
+          }
+        }
+        done++; updateProgress(done, hosts.length);
+      });
+
+      renderCountryBoards(countryMap);
+      scanProgress.textContent = 'Done.';
+    }
+
+    scanBtn.addEventListener('click', scanAll);
+  </script>
 </body>
 </html>
