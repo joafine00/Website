@@ -25,17 +25,22 @@
     const btn = document.getElementById('checkBtn');
     const info = document.getElementById('serverInfo');
     let refreshInterval;
-    let userLocation = null;
+    let userCoords = null;
 
-    // Detect user location on page load
-    fetch(GEO)
-      .then(r => r.json())
-      .then(data => {
-        userLocation = data;
-      })
-      .catch(() => {
-        userLocation = null;
-      });
+    // Ask user for location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          userCoords = {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude
+          };
+        },
+        err => {
+          console.warn("User denied location.");
+        }
+      );
+    }
 
     btn.addEventListener('click', () => {
       clearInterval(refreshInterval);
@@ -68,51 +73,34 @@
         if (!r.ok) throw new Error('Request failed');
         const data = await r.json();
 
-        if (!data.online) {
-          info.innerHTML = `<div class="text-red-600 font-semibold">${host} is offline</div>`;
-          return;
-        }
-
-        const players = data.players ? `${data.players.online} / ${data.players.max}` : 'Unknown';
-        const version = data.version || 'Unknown';
-        const motd = data.motd && data.motd.clean ? data.motd.clean.join('<br>') : '';
-        const ip = data.ip || host;
-        const port = data.port || 'Default';
-        const ping = data.debug && data.debug.ping ? data.debug.ping : Math.floor(Math.random()*300+50);
-
-        // Fetch server location
-        let serverLocation = null;
+        // Get server geo info
+        let geoData = null;
         try {
-          const geoResp = await fetch(GEO + ip);
-          serverLocation = await geoResp.json();
+          const g = await fetch(GEO + data.ip);
+          if (g.ok) geoData = await g.json();
         } catch (e) {
-          serverLocation = null;
+          console.warn("Geo lookup failed");
         }
 
-        const serverLocText = serverLocation && serverLocation.status === "success"
-          ? `${serverLocation.country} (${serverLocation.city || 'Unknown'})`
-          : 'Unknown';
-
-        const userLocText = userLocation && userLocation.status === "success"
-          ? `${userLocation.country} (${userLocation.city || 'Unknown'})`
-          : 'Unknown';
+        const ping = data.debug && data.debug.ping ? data.debug.ping : null;
 
         info.innerHTML = `
-          <h2 class="text-xl font-bold mb-2">${host}</h2>
-          <div class="grid gap-2 text-sm">
-            <div><strong>Status:</strong> Online</div>
-            <div><strong>Players:</strong> ${players}</div>
-            <div><strong>Version:</strong> ${version}</div>
-            <div><strong>MOTD:</strong> ${motd}</div>
-            <div><strong>IP:</strong> ${ip}:${port}</div>
-            <div><strong>Ping:</strong> ${renderPingBars(ping)}</div>
-            <div><strong>Server Location:</strong> ${serverLocText}</div>
-            <div><strong>Your Location:</strong> ${userLocText}</div>
-            <div class="text-xs text-gray-500">Last update: ${new Date().toLocaleTimeString()}</div>
-          </div>
+          <h2 class="text-xl font-semibold mb-2">${host}</h2>
+          <p>Status: ${data.online ? '<span class="text-green-500">Online</span>' : '<span class="text-red-500">Offline</span>'}</p>
+          ${data.online ? `
+            <p>Players: ${data.players.online} / ${data.players.max}</p>
+            <p>Version: ${data.version || 'Unknown'}</p>
+            <p>MOTD: ${data.motd && data.motd.clean ? data.motd.clean.join('<br>') : ''}</p>
+            <p>IP: ${data.ip}:${data.port}</p>
+            <div class="mt-2">Ping: ${ping ? renderPingBars(ping) : '<span class="text-gray-500">Not available</span>'}</div>
+            ${geoData ? `<p class="mt-2">🌍 Server location: ${geoData.country}, ${geoData.city}</p>` : ''}
+            ${userCoords ? `<p>📍 Your location: Lat ${userCoords.lat.toFixed(2)}, Lon ${userCoords.lon.toFixed(2)}</p>` : ''}
+            <p class="mt-2 text-sm text-gray-400">Last updated: ${new Date().toLocaleTimeString()}</p>
+          ` : ''}
         `;
+
       } catch (e) {
-        info.innerHTML = `<div class="text-red-600">Error loading server data.</div>`;
+        info.innerHTML = '<p class="text-red-500">Error fetching server info.</p>';
       }
     }
   </script>
