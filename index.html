@@ -63,6 +63,24 @@
       return `<div class="flex items-center gap-2"><div class="flex items-end">${bars}</div><span class="text-sm text-gray-500">${ping} ms</span></div>`;
     }
 
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371; // km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function estimatePing(user, server) {
+      if (!user || !server) return null;
+      const dist = haversine(user.lat, user.lon, server.lat, server.lon);
+      // approx: 1 ms per 200 km + 30ms overhead
+      return Math.round(dist / 200 + 30);
+    }
+
     async function fetchServer(host) {
       if (!host) return;
       info.innerHTML = '<p>Loading...</p>';
@@ -82,7 +100,13 @@
           console.warn("Geo lookup failed");
         }
 
-        const ping = data.debug && data.debug.ping ? data.debug.ping : null;
+        // Use real ping if available
+        let ping = data.debug && data.debug.ping ? data.debug.ping : null;
+
+        // If no ping, estimate based on distance
+        if (!ping && userCoords && geoData && geoData.lat && geoData.lon) {
+          ping = estimatePing(userCoords, { lat: geoData.lat, lon: geoData.lon });
+        }
 
         info.innerHTML = `
           <h2 class="text-xl font-semibold mb-2">${host}</h2>
