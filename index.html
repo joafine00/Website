@@ -7,29 +7,56 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-  <!-- Banner UniversoCraft -->
-  <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md text-center">
-    <h1 class="text-3xl font-bold">🌌 UniversoCraft</h1>
-    <p class="text-sm">Patrocinado pelo maior network de Minecraft em PT-BR</p>
+
+  <!-- Banner principal -->
+  <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md flex justify-between items-center">
+    <div class="text-center w-full">
+      <h1 class="text-3xl font-bold">🌌 Minecraft Server Status</h1>
+      <p class="text-sm">Verifica em tempo real qualquer servidor</p>
+    </div>
+    <!-- Botão Discord -->
+    <a href="https://discord.gg/tHjnzrHpdV" target="_blank" 
+       class="ml-4 bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-full font-semibold shadow">
+      💬 Discord
+    </a>
   </div>
 
   <div class="max-w-3xl mx-auto p-6">
-    <h2 class="text-2xl font-semibold mb-6 text-center">Minecraft Server Status</h2>
 
-    <form id="serverForm" class="flex flex-col gap-2 mb-4" onsubmit="return false;">
+    <!-- ANÚNCIO DE DIVULGAÇÃO -->
+    <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl shadow-lg p-6 mb-6 text-center">
+      <h2 class="text-2xl font-bold mb-2">🌟 Patrocinado por UniversoCraft</h2>
+      <p class="mb-3">
+        O maior servidor espanhol de Minecraft!<br>
+        SkyWars ⚔️ Survival 🌍 BedWars 🛡️ e muito mais!
+      </p>
+      <p class="font-mono text-lg bg-black text-yellow-300 px-4 py-1 rounded-lg inline-block">
+        IP: <b>mc.universocraft.com</b>
+      </p>
+      <div class="mt-4">
+        <a href="https://universocraft.com" target="_blank" 
+           class="bg-red-600 hover:bg-red-500 text-white px-5 py-2 rounded-full font-semibold transition">
+          🚀 Jogar Agora
+        </a>
+      </div>
+    </div>
+    <!-- FIM ANÚNCIO -->
+
+    <h2 class="text-2xl font-semibold mb-6 text-center">Verificar Servidor</h2>
+
+    <div class="flex gap-2 mb-4">
       <input id="serverInput" type="text" placeholder="Digite o IP do servidor (ex: play.hypixel.net)" class="flex-1 border rounded p-2 text-black">
-
-      <!-- Honeypot (campo escondido para bots) -->
-      <input type="text" id="hpfield" name="hpfield" style="display:none">
-
       <button id="checkBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">Verificar</button>
-    </form>
+    </div>
 
     <div id="serverInfo" class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 hidden"></div>
   </div>
 
   <footer class="bg-gray-800 text-gray-300 text-center p-4 mt-6">
-    <p>🌍 UniversoCraft © 2025 — Todos os direitos reservados</p>
+    <p>🌍 Projeto Open Source | Divulgação patrocinada: UniversoCraft</p>
+    <p class="mt-1">
+      💬 Junta-te ao nosso <a href="https://discord.gg/tHjnzrHpdV" target="_blank" class="text-blue-400 underline">Discord</a>
+    </p>
   </footer>
 
   <script>
@@ -38,11 +65,9 @@
     const input = document.getElementById('serverInput');
     const btn = document.getElementById('checkBtn');
     const info = document.getElementById('serverInfo');
-    const hpfield = document.getElementById('hpfield');
     let refreshInterval;
     let userCoords = null;
 
-    // Geolocalização
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude },
@@ -51,12 +76,6 @@
     }
 
     btn.addEventListener('click', () => {
-      // Anti-bot: se o honeypot estiver preenchido, bloqueia
-      if (hpfield.value.trim() !== "") {
-        alert("Bot detectado 🚫");
-        return;
-      }
-
       clearInterval(refreshInterval);
       fetchServer(input.value.trim());
       refreshInterval = setInterval(() => fetchServer(input.value.trim()), 30000);
