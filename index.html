@@ -23,22 +23,27 @@
 
   <div class="max-w-3xl mx-auto p-6">
 
-    <!-- ANÚNCIO DE DIVULGAÇÃO (popup flutuante) -->
-    <div id="popup" class="hidden fixed bottom-5 right-5 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl shadow-xl p-4 animate-bounce z-50">
-      <h2 class="text-lg font-bold">🌟 Patrocinado por UniversoCraft</h2>
-      <p class="text-sm">O maior servidor espanhol de Minecraft!</p>
-      <p class="font-mono text-sm bg-black text-yellow-300 px-2 py-1 rounded-lg inline-block mt-1">
+    <!-- ANÚNCIO POPUP -->
+    <div id="popup" class="fixed bottom-5 right-5 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl shadow-lg p-4 hidden z-50">
+      <h2 class="text-lg font-bold">🌟 UniversoCraft</h2>
+      <p class="text-sm">O maior servidor espanhol de Minecraft!<br>SkyWars ⚔️ Survival 🌍 BedWars 🛡️</p>
+      <p class="font-mono text-sm bg-black text-yellow-300 px-2 py-1 rounded mt-2 inline-block">
         IP: <b>mc.universocraft.com</b>
       </p>
-      <a href="https://universocraft.com" target="_blank" 
-         class="block mt-2 bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full font-semibold transition text-center">
-        🚀 Jogar Agora
-      </a>
-      <button onclick="document.getElementById('popup').classList.add('hidden')" class="absolute top-1 right-2 text-black">✖</button>
+      <div class="mt-2">
+        <a href="https://universocraft.com" target="_blank" 
+           class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full font-semibold transition">
+          🚀 Jogar Agora
+        </a>
+      </div>
     </div>
+
     <script>
-      // Mostrar popup automaticamente após 5s
-      setTimeout(() => document.getElementById('popup').classList.remove('hidden'), 5000);
+      setInterval(() => {
+        const popup = document.getElementById("popup");
+        popup.classList.toggle("hidden");
+        setTimeout(() => popup.classList.add("hidden"), 8000);
+      }, 20000);
     </script>
     <!-- FIM POPUP -->
 
@@ -47,11 +52,15 @@
     <div class="flex gap-2 mb-4">
       <input id="serverInput" type="text" placeholder="Digite o IP do servidor (ex: play.hypixel.net)" class="flex-1 border rounded p-2 text-black">
       <button id="checkBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">Verificar</button>
-      <select id="intervalSelect" class="border rounded p-2 text-black">
-        <option value="0">Manual</option>
+    </div>
+
+    <!-- Controle de intervalo -->
+    <div class="flex items-center gap-2 mb-4">
+      <label for="intervalSelect" class="text-sm">Atualizar a cada:</label>
+      <select id="intervalSelect" class="border rounded p-1 text-black">
         <option value="15000">15s</option>
         <option value="30000" selected>30s</option>
-        <option value="60000">1 min</option>
+        <option value="60000">60s</option>
       </select>
     </div>
 
@@ -71,10 +80,42 @@
     const input = document.getElementById('serverInput');
     const btn = document.getElementById('checkBtn');
     const info = document.getElementById('serverInfo');
+    const intervalSelect = document.getElementById('intervalSelect');
     let refreshInterval;
     let userCoords = null;
 
-    // Função Haversine
+    // Mapa de países principais com coordenadas
+    const countryCoords = {
+      "United States": { lat: 39.8283, lon: -98.5795 },
+      "Canada": { lat: 43.6532, lon: -79.3832 },
+      "Brazil": { lat: -23.5505, lon: -46.6333 },
+      "Germany": { lat: 52.52, lon: 13.4050 },
+      "France": { lat: 48.8566, lon: 2.3522 },
+      "Netherlands": { lat: 52.3676, lon: 4.9041 },
+      "United Kingdom": { lat: 51.5074, lon: -0.1278 },
+      "Spain": { lat: 40.4168, lon: -3.7038 },
+      "Portugal": { lat: 38.7169, lon: -9.1390 },
+      "Sweden": { lat: 59.3293, lon: 18.0686 },
+      "Poland": { lat: 52.2297, lon: 21.0122 },
+      "Czechia": { lat: 50.0755, lon: 14.4378 },
+      "Singapore": { lat: 1.3521, lon: 103.8198 },
+      "Japan": { lat: 35.6895, lon: 139.6917 },
+      "Australia": { lat: -33.8688, lon: 151.2093 },
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude },
+        () => console.warn("Localização não autorizada.")
+      );
+    }
+
+    btn.addEventListener('click', () => {
+      clearInterval(refreshInterval);
+      fetchServer(input.value.trim());
+      refreshInterval = setInterval(() => fetchServer(input.value.trim()), parseInt(intervalSelect.value));
+    });
+
     function haversine(lat1, lon1, lat2, lon2) {
       const R = 6371;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -86,29 +127,6 @@
       return R * c;
     }
 
-    // Estimativa de ping: 2km = +1ms, base 30ms
-    function estimatePing(user, server) {
-      if (!user || !server) return null;
-      const dist = haversine(user.lat, user.lon, server.lat, server.lon);
-      return Math.round(dist / 2 + 30);
-    }
-
-    function renderPingBars(ping) {
-      let level;
-      if (ping <= 100) level = 5;
-      else if (ping <= 200) level = 4;
-      else if (ping <= 350) level = 3;
-      else if (ping <= 500) level = 2;
-      else level = 1;
-
-      let bars = '';
-      for (let i = 1; i <= 5; i++) {
-        bars += `<span class="inline-block w-2 h-${i} rounded-sm mr-0.5 ${i <= level ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'}"></span>`;
-      }
-      return `<div class="flex items-center gap-2"><div class="flex items-end">${bars}</div><span class="text-sm text-gray-500">${ping} ms</span></div>`;
-    }
-
-    // Função principal
     async function fetchServer(host) {
       if (!host) return;
       info.innerHTML = '<p>A carregar...</p>';
@@ -127,14 +145,16 @@
           console.warn("Geo lookup falhou");
         }
 
+        // Calcular ping estimado com base nos países
         let pingEstimado = null;
-        if (userCoords && geoData && geoData.lat && geoData.lon) {
-          pingEstimado = estimatePing(userCoords, { lat: geoData.lat, lon: geoData.lon });
+        if (userCoords && geoData && geoData.country) {
+          const serverCountry = geoData.country;
+          if (countryCoords[serverCountry]) {
+            const serverPos = countryCoords[serverCountry];
+            const dist = haversine(userCoords.lat, userCoords.lon, serverPos.lat, serverPos.lon);
+            pingEstimado = Math.round(dist / 2 + 20);
+          }
         }
-
-        let pingDisplay = pingEstimado
-          ? renderPingBars(pingEstimado) + `<p class="text-xs text-gray-400">(estimado)</p>`
-          : '<span class="text-gray-500">Não disponível (ativa localização)</span>';
 
         info.innerHTML = `
           <h2 class="text-xl font-semibold mb-2">${host}</h2>
@@ -144,40 +164,16 @@
             <p>Versão: ${data.version || 'Desconhecida'}</p>
             <p>MOTD: ${data.motd && data.motd.clean ? data.motd.clean.join('<br>') : ''}</p>
             <p>Endereço: ${data.ip}:${data.port}</p>
-            <div class="mt-2">Ping: ${pingDisplay}</div>
-            ${geoData ? `<p class="mt-2">🌍 Localização do servidor: ${geoData.country}, ${geoData.city}</p>` : ''}
+            <div class="mt-2">Ping: ${pingEstimado ? pingEstimado + ' ms (estimado)' : '<span class="text-gray-500">Não disponível</span>'}</div>
+            ${geoData ? `<p class="mt-2">🌍 Localização do servidor: ${geoData.country}${geoData.city ? ', ' + geoData.city : ''}</p>` : ''}
             ${userCoords ? `<p>📍 A tua localização: Lat ${userCoords.lat.toFixed(2)}, Lon ${userCoords.lon.toFixed(2)}</p>` : ''}
             <p class="mt-2 text-sm text-gray-400">Última atualização: ${new Date().toLocaleTimeString()}</p>
           ` : ''}
         `;
       } catch (e) {
-        console.error(e);
         info.innerHTML = '<p class="text-red-500">Erro ao buscar informações do servidor.</p>';
       }
     }
-
-    // Sempre pede localização antes de verificar
-    btn.addEventListener('click', () => {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-          console.log("Localização capturada:", userCoords);
-
-          clearInterval(refreshInterval);
-          fetchServer(input.value.trim());
-
-          const interval = parseInt(document.getElementById('intervalSelect').value);
-          if (interval > 0) {
-            refreshInterval = setInterval(() => fetchServer(input.value.trim()), interval);
-          }
-        },
-        err => {
-          console.warn("Localização não autorizada:", err);
-          alert("⚠️ Ativa a localização no navegador para calcular o ping!");
-          fetchServer(input.value.trim()); // ainda mostra info sem ping
-        }
-      );
-    });
   </script>
 </body>
 </html>
