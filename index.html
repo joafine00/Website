@@ -3,90 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Servidor UniversoCraft</title>
+  <title>Minecraft Server Analystic | UniversoCraft</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Animação do toast "respirando" */
-    @keyframes float {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-5px) scale(1.02); }
+    /* Animação do popup UniversoCraft */
+    @keyframes bouncePopup {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
     }
-    .animate-float {
-      animation: float 3s ease-in-out infinite;
-    }
-    /* Fundo do modal */
-    .modal-bg {
-      background: rgba(0,0,0,0.6);
+    .popup-bounce {
+      animation: bouncePopup 3s infinite;
     }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
-  <!-- Toast UniversoCraft -->
-  <div id="toast" 
-       class="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-xl shadow-lg cursor-pointer animate-float flex items-center gap-3">
-    <span class="text-lg font-bold">🌌 UniversoCraft</span>
-    <span class="text-sm opacity-90">Clique para ver detalhes</span>
+  <!-- Banner principal -->
+  <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md flex justify-between items-center">
+    <div class="text-center w-full">
+      <h1 class="text-3xl font-bold">🌌 Minecraft Server Analystic</h1>
+      <p class="text-sm">Analisa em tempo real qualquer servidor</p>
+    </div>
+    <!-- Botão Discord -->
+    <a href="https://discord.gg/tHjnzrHpdV" target="_blank" 
+       class="ml-4 bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-full font-semibold shadow">
+      💬 Discord
+    </a>
+  </div>
+
+  <div class="max-w-3xl mx-auto p-6">
+    <!-- Input para verificação -->
+    <h2 class="text-2xl font-semibold mb-6 text-center">Verificar Servidor</h2>
+    <div class="flex gap-2 mb-4">
+      <input id="serverInput" type="text" placeholder="Digite o IP do servidor (ex: play.hypixel.net)" 
+        class="flex-1 border rounded p-2 text-black">
+      <button id="checkBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">Verificar</button>
+    </div>
+    <!-- Resultado -->
+    <div id="serverInfo" class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 hidden"></div>
+  </div>
+
+  <!-- Popup UniversoCraft -->
+  <div id="universoPopup" 
+       class="fixed bottom-6 right-6 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl shadow-lg p-4 cursor-pointer popup-bounce">
+    <h3 class="font-bold text-lg">🌟 UniversoCraft</h3>
+    <p class="text-sm">Clica para ver detalhes 🔎</p>
   </div>
 
   <!-- Modal UniversoCraft -->
-  <div id="modal" class="hidden fixed inset-0 flex items-center justify-center modal-bg z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 relative">
-      <!-- Botão Fechar -->
-      <button id="closeModal" class="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
-
-      <h2 class="text-3xl font-bold text-center text-indigo-600 dark:text-indigo-400 mb-4">
-        🌌 UniversoCraft
-      </h2>
-      <p class="text-center text-gray-600 dark:text-gray-300 mb-6">
-        O maior servidor de minigames em espanhol, com +25 modalidades!
+  <div id="universoModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg max-w-lg w-full">
+      <h2 class="text-2xl font-bold mb-2">🌌 UniversoCraft</h2>
+      <p class="mb-3">O maior servidor espanhol de Minecraft! +25 minigames 🎮</p>
+      <p class="font-mono text-lg bg-black text-yellow-300 px-4 py-1 rounded-lg inline-block mb-3">
+        IP: <b>mc.universocraft.com</b>
       </p>
-
-      <!-- Info do Servidor -->
-      <div class="space-y-3 text-gray-700 dark:text-gray-200">
-        <p><b>🎮 IP:</b> <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">mc.universocraft.com</code></p>
-        <p><b>🌍 Localização:</b> Espanha 🇪🇸</p>
-        <p><b>⚔️ Minigames:</b> SkyWars, Survival, BedWars, Duels, UHC e muito mais!</p>
-        <p><b>🆕 Novidades:</b> Evento de Verão ☀️ | Novos mapas no BedWars 🛡️</p>
-        <p><b>📡 Versões:</b> 1.8 – 1.21</p>
-      </div>
-
-      <!-- Ações -->
-      <div class="mt-6 flex justify-center gap-4">
-        <a href="https://universocraft.com" target="_blank"
-           class="bg-red-600 hover:bg-red-500 text-white px-5 py-2 rounded-lg shadow-lg transition transform hover:scale-105">
+      <p>🌍 Localização: Espanha</p>
+      <p>🔥 Novidades: BedWars 🛡️, SkyWars ⚔️, Survival 🌍 e muito mais!</p>
+      <div class="mt-4 flex justify-between">
+        <a href="https://universocraft.com" target="_blank" 
+           class="bg-red-600 hover:bg-red-500 text-white px-5 py-2 rounded-full font-semibold transition">
           🚀 Jogar Agora
         </a>
-        <a href="https://discord.gg/tHjnzrHpdV" target="_blank"
-           class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg shadow-lg transition transform hover:scale-105">
+        <a href="https://discord.gg/tHjnzrHpdV" target="_blank" 
+           class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-full font-semibold transition">
           💬 Discord
         </a>
       </div>
+      <button id="closeModal" class="mt-6 text-gray-500 hover:text-gray-800">Fechar</button>
     </div>
   </div>
 
+  <footer class="bg-gray-800 text-gray-300 text-center p-4 mt-6">
+    <p>🌍 Projeto Open Source | Divulgação patrocinada: UniversoCraft</p>
+    <p class="mt-1">
+      💬 Junta-te ao nosso <a href="https://discord.gg/tHjnzrHpdV" target="_blank" class="text-blue-400 underline">Discord</a>
+    </p>
+  </footer>
+
   <script>
-    const toast = document.getElementById("toast");
-    const modal = document.getElementById("modal");
-    const closeModal = document.getElementById("closeModal");
+    const API = 'https://api.mcsrvstat.us/2/';
+    const input = document.getElementById('serverInput');
+    const btn = document.getElementById('checkBtn');
+    const info = document.getElementById('serverInfo');
 
-    // Abrir modal ao clicar no toast
-    toast.addEventListener("click", () => {
-      modal.classList.remove("hidden");
+    // Evento de análise
+    btn.addEventListener('click', () => {
+      fetchServer(input.value.trim());
     });
 
-    // Fechar modal
-    closeModal.addEventListener("click", () => {
-      modal.classList.add("hidden");
-    });
+    async function fetchServer(host) {
+      if (!host) return;
+      info.innerHTML = '<p>A carregar...</p>';
+      info.classList.remove('hidden');
 
-    // Fechar modal ao clicar fora
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.add("hidden");
+      try {
+        const r = await fetch(API + encodeURIComponent(host));
+        if (!r.ok) throw new Error('Falha no pedido');
+        const data = await r.json();
+
+        info.innerHTML = `
+          <h2 class="text-xl font-semibold mb-2">${host}</h2>
+          <p>Status: ${data.online ? '<span class="text-green-500">🟢 Online</span>' : '<span class="text-red-500">🔴 Offline</span>'}</p>
+          ${data.online ? `
+            <p>Jogadores: ${data.players.online} / ${data.players.max}</p>
+            <p>Versão: ${data.version || 'Desconhecida'}</p>
+            <p>MOTD: ${data.motd && data.motd.clean ? data.motd.clean.join('<br>') : 'N/A'}</p>
+            <p>Endereço: ${data.ip}:${data.port}</p>
+            <p class="mt-2 text-sm text-gray-400">Última atualização: ${new Date().toLocaleTimeString()}</p>
+          ` : ''}
+        `;
+      } catch (e) {
+        info.innerHTML = '<p class="text-red-500">Erro ao buscar informações do servidor.</p>';
       }
-    });
-  </script>
+    }
 
+    // Popup UniversoCraft
+    const popup = document.getElementById('universoPopup');
+    const modal = document.getElementById('universoModal');
+    const closeModal = document.getElementById('closeModal');
+
+    popup.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+  </script>
 </body>
 </html>
