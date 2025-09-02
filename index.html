@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Server Analyzer Futurista</title>
+  <title>Minecraft Server Analyzer</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -15,19 +15,8 @@
       border: 1px solid rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(12px);
     }
-    .popup {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      animation: slideUp 0.8s ease-out;
-      z-index: 50;
-    }
-    @keyframes slideUp {
-      from { transform: translateY(50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
     .fade-in {
-      animation: fadeIn 1.2s ease-in;
+      animation: fadeIn 1s ease-in;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: scale(0.95); }
@@ -39,15 +28,15 @@
 
   <!-- Header -->
   <header class="glass p-6 shadow-lg text-center">
-    <h1 class="text-4xl font-extrabold text-indigo-400 drop-shadow">🌌 Server Analyzer</h1>
-    <p class="text-gray-400">Analisa servidores Minecraft em tempo real</p>
+    <h1 class="text-4xl font-extrabold text-indigo-400 drop-shadow">🌍 Minecraft Server Analyzer</h1>
+    <p class="text-gray-400">Verifica status e detalhes de qualquer servidor Minecraft</p>
   </header>
 
   <!-- Main -->
-  <main class="max-w-4xl mx-auto p-6">
+  <main class="max-w-3xl mx-auto p-6">
     <!-- Input -->
     <div class="glass rounded-2xl p-6 shadow-xl mb-6 fade-in">
-      <h2 class="text-2xl font-semibold mb-4">🔍 Verificar Servidor</h2>
+      <h2 class="text-2xl font-semibold mb-4">🔍 Procurar Servidor</h2>
       <div class="flex gap-2 mb-4">
         <input id="serverInput" type="text" 
                placeholder="Digite o IP (ex: play.hypixel.net)" 
@@ -57,15 +46,6 @@
           Verificar
         </button>
       </div>
-      <div class="flex items-center gap-2">
-        <label for="refreshSelect">Atualizar:</label>
-        <select id="refreshSelect" class="bg-gray-800 text-white rounded p-2">
-          <option value="0">Manual</option>
-          <option value="30">30s</option>
-          <option value="60">1 min</option>
-          <option value="120">2 min</option>
-        </select>
-      </div>
     </div>
 
     <!-- Result -->
@@ -74,75 +54,14 @@
 
   <!-- Footer -->
   <footer class="glass mt-6 p-4 text-center text-gray-400 text-sm">
-    🌍 Projeto Open Source • Patrocinado por <b>UniversoCraft</b>
+    📡 Projeto simples para análise de servidores Minecraft
   </footer>
-
-  <!-- Popup UniversoCraft -->
-  <div id="popup" class="popup hidden">
-    <div class="glass p-5 rounded-2xl shadow-lg text-center">
-      <h2 class="text-xl font-bold text-yellow-400">🌟 UniversoCraft</h2>
-      <p class="text-sm text-gray-300">O maior servidor espanhol de Minecraft!</p>
-      <p class="mt-2 font-mono bg-black text-yellow-300 px-3 py-1 rounded">mc.universocraft.com</p>
-      <a href="https://universocraft.com" target="_blank" 
-         class="mt-3 block bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg">
-        🚀 Jogar Agora
-      </a>
-    </div>
-  </div>
 
   <script>
     const API = 'https://api.mcsrvstat.us/2/';
-    const GEO = 'http://ip-api.com/json/';
     const info = document.getElementById('serverInfo');
     const input = document.getElementById('serverInput');
     const btn = document.getElementById('checkBtn');
-    const refreshSelect = document.getElementById('refreshSelect');
-    let refreshInterval;
-    let userCoords = null, userCountry = null;
-
-    // Coordenadas médias por país
-    const countryCoords = {
-      "Portugal": { lat: 39.5, lon: -8.0 },
-      "Spain": { lat: 40.4, lon: -3.7 },
-      "Brazil": { lat: -14.2, lon: -51.9 },
-      "United States": { lat: 37.1, lon: -95.7 },
-      "Germany": { lat: 51.2, lon: 10.4 },
-      "France": { lat: 46.6, lon: 2.2 },
-      "United Kingdom": { lat: 55.3, lon: -3.4 }
-    };
-
-    // Haversine
-    function haversine(lat1, lon1, lat2, lon2) {
-      const R = 6371;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    }
-    function estimatePing(user, server) {
-      if (!user || !server) return null;
-      const dist = haversine(user.lat, user.lon, server.lat, server.lon);
-      return Math.round(20 + dist / 2);
-    }
-
-    async function getUserLocation() {
-      return new Promise(resolve => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            pos => {
-              userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-              resolve();
-            },
-            async () => {
-              const res = await fetch("https://ipapi.co/json/");
-              const data = await res.json();
-              if (data && data.country_name) userCountry = data.country_name;
-              resolve();
-            }
-          );
-        } else resolve();
-      });
-    }
 
     async function fetchServer(host) {
       if (!host) return;
@@ -153,19 +72,6 @@
         const r = await fetch(API + encodeURIComponent(host));
         const data = await r.json();
 
-        let geoData = null;
-        try {
-          const g = await fetch(GEO + data.ip);
-          if (g.ok) geoData = await g.json();
-        } catch {}
-
-        let serverCoords = geoData && geoData.country && countryCoords[geoData.country] 
-          ? countryCoords[geoData.country] : null;
-
-        let finalUserCoords = userCoords || (userCountry && countryCoords[userCountry] ? countryCoords[userCountry] : null);
-
-        let ping = estimatePing(finalUserCoords, serverCoords);
-
         info.innerHTML = `
           <h2 class="text-2xl font-bold text-indigo-400 mb-3">${host}</h2>
           <p>Status: ${data.online ? '🟢 Online' : '🔴 Offline'}</p>
@@ -174,9 +80,6 @@
             <p>Versão: ${data.version || 'Desconhecida'}</p>
             <p>MOTD: ${data.motd?.clean?.join('<br>') || ''}</p>
             <p>Endereço: ${data.ip}:${data.port}</p>
-            <p>Ping: ${ping ? ping + ' ms (estimado)' : '❌ Não disponível'}</p>
-            ${geoData ? `<p>🌍 Servidor localizado em: ${geoData.country}</p>` : ''}
-            ${finalUserCoords ? `<p>📍 A tua localização foi usada para o cálculo</p>` : ''}
             <p class="mt-2 text-xs text-gray-400">Última atualização: ${new Date().toLocaleTimeString()}</p>
           ` : ''}
         `;
@@ -185,16 +88,9 @@
       }
     }
 
-    btn.addEventListener('click', async () => {
-      clearInterval(refreshInterval);
-      await getUserLocation();
+    btn.addEventListener('click', () => {
       fetchServer(input.value.trim());
-      let interval = parseInt(refreshSelect.value);
-      if (interval > 0) refreshInterval = setInterval(() => fetchServer(input.value.trim()), interval * 1000);
     });
-
-    // Mostrar popup patrocinado
-    setTimeout(() => document.getElementById('popup').classList.remove('hidden'), 5000);
   </script>
 </body>
 </html>
