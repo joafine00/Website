@@ -27,14 +27,32 @@
 <!-- Permissions Policy (bloqueia APIs do browser que não usas) -->
 <meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=()">
 
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
-<form action="?" method="POST">
-  <div class="g-recaptcha" data-sitekey="6LeX5bsrAAAAAPBtXeTo7lCGkZC43YbphbuFiuSc"></div>
-  <br>
-  <button type="submit">Enviar</button>
-</form>
     
+    <!-- Tela de verificação -->
+<div id="verifyScreen" style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;background:#f0f0f0;text-align:center;">
+  <h2>⚠️ Verificação de Segurança</h2>
+  <p>Confirme que você não é um robô:</p>
+  <form onsubmit="return verifiedUser()">
+    <div class="g-recaptcha" data-sitekey="6LeX5bsrAAAAAPBtXeTo7lCGkZC43YbphbuFiuSc"></div>
+    <br>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+
+<!-- Conteúdo real do site (fica oculto até validar) -->
+<div id="siteContent" style="display:none;">
+  <!-- Teu site vai aqui -->
+</div>
+
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
+  function verifiedUser() {
+    document.getElementById("verifyScreen").style.display = "none";
+    document.getElementById("siteContent").style.display = "block";
+    return false;
+  }
+</script>
+
     
 
 <script>
