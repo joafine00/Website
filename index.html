@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Server Analystic | UniversoCraft</title>
+  <title>Minecraft Server Analystic</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @keyframes bouncePopup {
@@ -67,9 +67,10 @@
         </a>
         <a href="https://discord.gg/tHjnzrHpdV" target="_blank" 
            class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-full font-semibold transition">
-          💬 Discord
+          💬 Nosso Discord
         </a>
       </div>
+      <p class="text-xs text-gray-500 mt-4">* Divulgação patrocinada – este site não é afiliado ao UniversoCraft *</p>
       <button id="closeModal" class="mt-6 text-gray-500 hover:text-gray-800">Fechar</button>
     </div>
   </div>
@@ -91,17 +92,17 @@
     <div class="p-3 border-t dark:border-gray-700">
       <select id="questionSelect" class="w-full p-2 rounded border text-black">
         <option value="">-- Escolha uma pergunta --</option>
-        <option value="ip">Qual o IP do servidor?</option>
-        <option value="jogar">Como posso jogar?</option>
-        <option value="mods">Precisa de mods?</option>
-        <option value="discord">Como entro no Discord?</option>
+        <option value="ip">Como descubro o IP de um servidor?</option>
+        <option value="jogar">Como posso jogar em servidores?</option>
+        <option value="mods">Preciso de mods para jogar?</option>
+        <option value="discord">Qual é o Discord deste site?</option>
         <option value="atualizar">As informações estão sempre atualizadas?</option>
-        <option value="host">Qual a melhor hospedagem para servidor?</option>
-        <option value="staff">Como virar staff?</option>
-        <option value="premium">Preciso de Minecraft original?</option>
-        <option value="regras">Onde vejo as regras?</option>
-        <option value="ping">Como melhorar meu ping?</option>
+        <option value="host">Qual a melhor hospedagem para servidores?</option>
+        <option value="versao">Qual versão do Minecraft devo usar?</option>
+        <option value="ping">Como posso melhorar meu ping/lag?</option>
+        <option value="encontrar">Onde encontro servidores populares?</option>
         <option value="skins">Posso usar skins personalizadas?</option>
+        <option value="premium">Posso jogar sem Minecraft original?</option>
       </select>
       <button id="sendQuestion" class="mt-2 w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded">Perguntar</button>
     </div>
@@ -173,17 +174,17 @@
     const chatMessages = document.getElementById('chatMessages');
 
     const respostas = {
-      ip: "O IP oficial é: <b>mc.universocraft.com</b>",
-      jogar: "Abra o Minecraft → Multijogador → Adicionar Servidor → Insira o IP.",
-      mods: "Não, o servidor não exige mods. Apenas Minecraft original ou não original.",
-      discord: "Nosso Discord: <a href='https://discord.gg/tHjnzrHpdV' target='_blank' class='text-blue-500 underline'>Clique aqui</a>",
-      atualizar: "As informações são atualizadas automaticamente pela API, mas pode haver atraso de alguns minutos.",
-      host: "Recomendamos <b>OVHCloud</b> para hospedagem de servidores. Veja preços: <a href='https://www.ovhcloud.com/pt/bare-metal/prices/?display=grid' target='_blank' class='text-blue-500 underline'>Clique aqui</a>",
-      staff: "As candidaturas para staff acontecem via formulário no Discord.",
-      premium: "O servidor aceita tanto Minecraft original (premium) quanto não original.",
-      regras: "As regras estão disponíveis em nosso site oficial.",
-      ping: "O ping depende da sua localização e internet. Use cabo de rede para melhor estabilidade.",
-      skins: "Sim! O servidor permite skins personalizadas, mesmo para não-premium."
+      ip: "Cada servidor tem um IP diferente. Exemplo: <b>play.hypixel.net</b>. Para jogar, basta adicionar no Minecraft.",
+      jogar: "Abra o Minecraft → Multijogador → Adicionar Servidor → insira o IP desejado.",
+      mods: "Alguns servidores exigem mods, outros não. Depende do servidor que escolher.",
+      discord: "Este é o nosso Discord oficial: <a href='https://discord.gg/tHjnzrHpdV' target='_blank' class='text-blue-500 underline'>Clique aqui</a>",
+      atualizar: "As informações são obtidas de APIs públicas. Podem demorar alguns minutos para atualizar.",
+      host: "Para hospedar o seu próprio servidor recomendamos OVHCloud ou Akliz, que oferecem ótimo desempenho.",
+      versao: "A versão mais usada hoje em dia é a 1.20+, mas muitos servidores ainda suportam versões antigas.",
+      ping: "Para reduzir o lag, use cabo de rede em vez de Wi-Fi, feche apps em segundo plano e escolha servidores mais próximos da sua região.",
+      encontrar: "Você pode encontrar listas de servidores em sites como <a href='https://minecraft-mp.com' target='_blank' class='text-blue-500 underline'>Minecraft-MP</a>.",
+      skins: "Sim! Você pode usar skins personalizadas. Em servidores crack, pode ser necessário usar lançadores alternativos.",
+      premium: "Depende do servidor: se estiver com <b>online-mode: true</b>, só jogadores com Minecraft original podem entrar. Se estiver com <b>online-mode: false</b>, também permite não originais."
     };
 
     chatBtn.addEventListener('click', () => chatWin.classList.remove('hidden'));
