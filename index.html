@@ -29,29 +29,58 @@
 
     
     <!-- Tela de verificação -->
-<div id="verifyScreen" style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;background:#f0f0f0;text-align:center;">
+<div id="verifyScreen" style="
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:#f9f9f9;
+  z-index:9999;
+  text-align:center;">
+  
   <h2>⚠️ Verificação de Segurança</h2>
-  <p>Confirme que você não é um robô:</p>
-  <form onsubmit="return verifiedUser()">
-    <div class="g-recaptcha" data-sitekey="6LeX5bsrAAAAAPBtXeTo7lCGkZC43YbphbuFiuSc"></div>
-    <br>
-    <button type="submit">Entrar</button>
-  </form>
+  <p>Resolva para continuar:</p>
+  <p id="captchaQuestion"></p>
+  <input type="number" id="captchaAnswer" placeholder="Digite o resultado">
+  <br><br>
+  <button onclick="checkCaptcha()">Entrar</button>
+  <p id="captchaError" style="color:red;display:none;">Resposta incorreta, tente de novo.</p>
 </div>
 
-<!-- Conteúdo real do site (fica oculto até validar) -->
+<!-- Conteúdo real do site -->
 <div id="siteContent" style="display:none;">
-  <!-- Teu site vai aqui -->
+  <!-- Aqui vai TODO o conteúdo do teu site -->
 </div>
 
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <script>
-  function verifiedUser() {
+  // Gera soma aleatória
+  const num1 = Math.floor(Math.random() * 10) + 1;
+  const num2 = Math.floor(Math.random() * 10) + 1;
+  const result = num1 + num2;
+  document.getElementById("captchaQuestion").textContent = `Quanto é ${num1} + ${num2}?`;
+
+  function checkCaptcha() {
+    const answer = document.getElementById("captchaAnswer").value;
+    if (parseInt(answer) === result) {
+      // Esconde captcha e mostra o site
+      document.getElementById("verifyScreen").style.display = "none";
+      document.getElementById("siteContent").style.display = "block";
+      // Salva no navegador para não pedir de novo
+      localStorage.setItem("captchaPassed", "true");
+    } else {
+      document.getElementById("captchaError").style.display = "block";
+    }
+  }
+
+  // Se já passou antes, pula captcha
+  if (localStorage.getItem("captchaPassed") === "true") {
     document.getElementById("verifyScreen").style.display = "none";
     document.getElementById("siteContent").style.display = "block";
-    return false;
   }
 </script>
+    
 
     
 
