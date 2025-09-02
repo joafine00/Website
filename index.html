@@ -6,7 +6,6 @@
   <title>Minecraft Server Analystic | UniversoCraft</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Animação do popup UniversoCraft */
     @keyframes bouncePopup {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-12px); }
@@ -18,13 +17,12 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
 
-  <!-- Banner principal -->
+  <!-- Banner -->
   <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md flex justify-between items-center">
     <div class="text-center w-full">
       <h1 class="text-3xl font-bold">🌌 Minecraft Server Analystic</h1>
       <p class="text-sm">Analisa em tempo real qualquer servidor</p>
     </div>
-    <!-- Botão Discord -->
     <a href="https://discord.gg/tHjnzrHpdV" target="_blank" 
        class="ml-4 bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-full font-semibold shadow">
       💬 Discord
@@ -32,14 +30,13 @@
   </div>
 
   <div class="max-w-3xl mx-auto p-6">
-    <!-- Input para verificação -->
+    <!-- Input -->
     <h2 class="text-2xl font-semibold mb-6 text-center">Verificar Servidor</h2>
     <div class="flex gap-2 mb-4">
       <input id="serverInput" type="text" placeholder="Digite o IP do servidor (ex: play.hypixel.net)" 
         class="flex-1 border rounded p-2 text-black">
       <button id="checkBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">Verificar</button>
     </div>
-    <!-- Resultado -->
     <div id="serverInfo" class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 hidden"></div>
   </div>
 
@@ -55,9 +52,12 @@
     <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg max-w-lg w-full">
       <h2 class="text-2xl font-bold mb-2">🌌 UniversoCraft</h2>
       <p class="mb-3">O maior servidor espanhol de Minecraft! +25 minigames 🎮</p>
-      <p class="font-mono text-lg bg-black text-yellow-300 px-4 py-1 rounded-lg inline-block mb-3">
-        IP: <b>mc.universocraft.com</b>
-      </p>
+      <div class="flex items-center gap-2 mb-3">
+        <p class="font-mono text-lg bg-black text-yellow-300 px-4 py-1 rounded-lg">
+          IP: <b>mc.universocraft.com</b>
+        </p>
+        <button id="copyIp" class="bg-gray-200 hover:bg-gray-300 text-sm px-2 py-1 rounded">Copiar</button>
+      </div>
       <p>🌍 Localização: Espanha</p>
       <p>🔥 Novidades: BedWars 🛡️, SkyWars ⚔️, Survival 🌍 e muito mais!</p>
       <div class="mt-4 flex justify-between">
@@ -74,36 +74,34 @@
     </div>
   </div>
 
-  <!-- Botão flutuante de suporte -->
+  <!-- Chat -->
   <div id="chatButton" 
        class="fixed bottom-6 left-6 bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-full shadow-lg cursor-pointer">
     💡
   </div>
 
-  <!-- Janela do Chat -->
   <div id="chatWindow" class="hidden fixed bottom-20 left-6 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex flex-col">
-    <!-- Cabeçalho -->
     <div class="bg-blue-600 text-white p-3 rounded-t-2xl flex justify-between items-center">
       <h3 class="font-bold">Suporte</h3>
       <button id="closeChat" class="hover:text-gray-200">✖</button>
     </div>
-
-    <!-- Área de mensagens -->
     <div id="chatMessages" class="p-3 h-64 overflow-y-auto text-sm space-y-2">
       <p class="text-gray-500">Selecione uma pergunta abaixo 👇</p>
     </div>
-
-    <!-- Perguntas pré-definidas -->
     <div class="p-3 border-t dark:border-gray-700">
       <select id="questionSelect" class="w-full p-2 rounded border text-black">
         <option value="">-- Escolha uma pergunta --</option>
-        <option value="ip">Qual o IP Do Servidor?</option>
-        <option value="jogar">Como Posso Jogar?</option>
-        <option value="mods">Precisa De Mods?</option>
-        <option value="discord">Como Entro No Discord?</option>
-        <option value="atualizar">Este Site Tem Todas As Informações Sobre Todos Os Servidores?</option>
-        <option value="host">Qual a Melhor Hospedagem Para Meu Servidor De Minecraft?</option>
-      </select>
+        <option value="ip">Qual o IP do servidor?</option>
+        <option value="jogar">Como posso jogar?</option>
+        <option value="mods">Precisa de mods?</option>
+        <option value="discord">Como entro no Discord?</option>
+        <option value="atualizar">As informações estão sempre atualizadas?</option>
+        <option value="host">Qual a melhor hospedagem para servidor?</option>
+        <option value="staff">Como virar staff?</option>
+        <option value="premium">Preciso de Minecraft original?</option>
+        <option value="regras">Onde vejo as regras?</option>
+        <option value="ping">Como melhorar meu ping?</option>
+        <option value="skins">Posso usar skins personalizadas?</option>
       </select>
       <button id="sendQuestion" class="mt-2 w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded">Perguntar</button>
     </div>
@@ -122,7 +120,6 @@
     const btn = document.getElementById('checkBtn');
     const info = document.getElementById('serverInfo');
 
-    // Evento de análise
     btn.addEventListener('click', () => {
       fetchServer(input.value.trim());
     });
@@ -143,7 +140,7 @@
           ${data.online ? `
             <p>Jogadores: ${data.players.online} / ${data.players.max}</p>
             <p>Versão: ${data.version || 'Desconhecida'}</p>
-            <p>MOTD: ${data.motd && data.motd.clean ? data.motd.clean.join('<br>') : 'N/A'}</p>
+            <p>MOTD: ${data.motd?.clean ? data.motd.clean.join('<br>') : 'N/A'}</p>
             <p>Endereço: ${data.ip}:${data.port}</p>
             <p class="mt-2 text-sm text-gray-400">Última atualização: ${new Date().toLocaleTimeString()}</p>
           ` : ''}
@@ -153,15 +150,21 @@
       }
     }
 
-    // Popup UniversoCraft
+    // Modal
     const popup = document.getElementById('universoPopup');
     const modal = document.getElementById('universoModal');
     const closeModal = document.getElementById('closeModal');
+    const copyIp = document.getElementById('copyIp');
 
     popup.addEventListener('click', () => modal.classList.remove('hidden'));
     closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+    copyIp.addEventListener('click', () => {
+      navigator.clipboard.writeText("mc.universocraft.com");
+      copyIp.textContent = "Copiado!";
+      setTimeout(() => copyIp.textContent = "Copiar", 1500);
+    });
 
-    // Chat de Suporte
+    // Chat
     const chatBtn = document.getElementById('chatButton');
     const chatWin = document.getElementById('chatWindow');
     const closeChat = document.getElementById('closeChat');
@@ -169,29 +172,29 @@
     const selectQ = document.getElementById('questionSelect');
     const chatMessages = document.getElementById('chatMessages');
 
-    // Respostas pré-definidas
     const respostas = {
-      ip: "O IP Oficial é: <b>mc.universocraft.com</b>",
-      jogar: "Basta Abrir o Minecraft, Clicar Em Multijogador e Adicionar o IP Do Servidor.",
-      mods: "Não, o Servidor Não Exige Mods. Apenas Minecraft Original Ou Não Original.",
+      ip: "O IP oficial é: <b>mc.universocraft.com</b>",
+      jogar: "Abra o Minecraft → Multijogador → Adicionar Servidor → Insira o IP.",
+      mods: "Não, o servidor não exige mods. Apenas Minecraft original ou não original.",
       discord: "Nosso Discord: <a href='https://discord.gg/tHjnzrHpdV' target='_blank' class='text-blue-500 underline'>Clique aqui</a>",
-      atualizar: "Sim, Todas As Informações Estão Sempre Atualizadas, Mas Podem Demorar a Carregar Então Saia Do Site e Entre De Novo Para Ver Se As Informações Foram Atualizadas.",
-      host: "A Melhor Hospedagem Para Seu Servidor Atualmente é a OVHCloud Com Até 1000 GB De Ram Acesse Agora <a href='https://www.ovhcloud.com/pt/bare-metal/prices/?display=grid' target='_blank' class='text-blue-500 underline'>Clique Aqui</a>"
+      atualizar: "As informações são atualizadas automaticamente pela API, mas pode haver atraso de alguns minutos.",
+      host: "Recomendamos <b>OVHCloud</b> para hospedagem de servidores. Veja preços: <a href='https://www.ovhcloud.com/pt/bare-metal/prices/?display=grid' target='_blank' class='text-blue-500 underline'>Clique aqui</a>",
+      staff: "As candidaturas para staff acontecem via formulário no Discord.",
+      premium: "O servidor aceita tanto Minecraft original (premium) quanto não original.",
+      regras: "As regras estão disponíveis em nosso site oficial.",
+      ping: "O ping depende da sua localização e internet. Use cabo de rede para melhor estabilidade.",
+      skins: "Sim! O servidor permite skins personalizadas, mesmo para não-premium."
     };
 
-    // Abrir e fechar chat
     chatBtn.addEventListener('click', () => chatWin.classList.remove('hidden'));
     closeChat.addEventListener('click', () => chatWin.classList.add('hidden'));
 
-    // Enviar pergunta
     sendQ.addEventListener('click', () => {
       const value = selectQ.value;
       if (!value) return;
 
-      // Mensagem do usuário
       chatMessages.innerHTML += `<div class="text-right"><p class="bg-blue-100 dark:bg-blue-700 inline-block px-3 py-1 rounded-lg">${selectQ.options[selectQ.selectedIndex].text}</p></div>`;
 
-      // Resposta da "IA"
       setTimeout(() => {
         chatMessages.innerHTML += `<div class="text-left"><p class="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-lg">${respostas[value]}</p></div>`;
         chatMessages.scrollTop = chatMessages.scrollHeight;
