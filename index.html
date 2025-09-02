@@ -3,94 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Server Analyzer</title>
+  <title>Servidor UniversoCraft</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      background: radial-gradient(circle at top, #1a1c2c, #0c0c0f);
-      font-family: 'Segoe UI', sans-serif;
+    /* Animação do toast "respirando" */
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-5px) scale(1.02); }
     }
-    .glass {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(12px);
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
     }
-    .fade-in {
-      animation: fadeIn 1s ease-in;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
+    /* Fundo do modal */
+    .modal-bg {
+      background: rgba(0,0,0,0.6);
     }
   </style>
 </head>
-<body class="text-gray-200">
+<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
 
-  <!-- Header -->
-  <header class="glass p-6 shadow-lg text-center">
-    <h1 class="text-4xl font-extrabold text-indigo-400 drop-shadow">🌍 Minecraft Server Analyzer</h1>
-    <p class="text-gray-400">Verifica status e detalhes de qualquer servidor Minecraft</p>
-  </header>
+  <!-- Toast UniversoCraft -->
+  <div id="toast" 
+       class="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-3 rounded-xl shadow-lg cursor-pointer animate-float flex items-center gap-3">
+    <span class="text-lg font-bold">🌌 UniversoCraft</span>
+    <span class="text-sm opacity-90">Clique para ver detalhes</span>
+  </div>
 
-  <!-- Main -->
-  <main class="max-w-3xl mx-auto p-6">
-    <!-- Input -->
-    <div class="glass rounded-2xl p-6 shadow-xl mb-6 fade-in">
-      <h2 class="text-2xl font-semibold mb-4">🔍 Procurar Servidor</h2>
-      <div class="flex gap-2 mb-4">
-        <input id="serverInput" type="text" 
-               placeholder="Digite o IP (ex: play.hypixel.net)" 
-               class="flex-1 rounded-lg px-4 py-2 bg-gray-900 text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400">
-        <button id="checkBtn" 
-                class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg shadow-lg transition">
-          Verificar
-        </button>
+  <!-- Modal UniversoCraft -->
+  <div id="modal" class="hidden fixed inset-0 flex items-center justify-center modal-bg z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 relative">
+      <!-- Botão Fechar -->
+      <button id="closeModal" class="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
+
+      <h2 class="text-3xl font-bold text-center text-indigo-600 dark:text-indigo-400 mb-4">
+        🌌 UniversoCraft
+      </h2>
+      <p class="text-center text-gray-600 dark:text-gray-300 mb-6">
+        O maior servidor de minigames em espanhol, com +25 modalidades!
+      </p>
+
+      <!-- Info do Servidor -->
+      <div class="space-y-3 text-gray-700 dark:text-gray-200">
+        <p><b>🎮 IP:</b> <code class="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">mc.universocraft.com</code></p>
+        <p><b>🌍 Localização:</b> Espanha 🇪🇸</p>
+        <p><b>⚔️ Minigames:</b> SkyWars, Survival, BedWars, Duels, UHC e muito mais!</p>
+        <p><b>🆕 Novidades:</b> Evento de Verão ☀️ | Novos mapas no BedWars 🛡️</p>
+        <p><b>📡 Versões:</b> 1.8 – 1.21</p>
+      </div>
+
+      <!-- Ações -->
+      <div class="mt-6 flex justify-center gap-4">
+        <a href="https://universocraft.com" target="_blank"
+           class="bg-red-600 hover:bg-red-500 text-white px-5 py-2 rounded-lg shadow-lg transition transform hover:scale-105">
+          🚀 Jogar Agora
+        </a>
+        <a href="https://discord.gg/tHjnzrHpdV" target="_blank"
+           class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg shadow-lg transition transform hover:scale-105">
+          💬 Discord
+        </a>
       </div>
     </div>
-
-    <!-- Result -->
-    <div id="serverInfo" class="glass rounded-2xl p-6 shadow-xl hidden fade-in"></div>
-  </main>
-
-  <!-- Footer -->
-  <footer class="glass mt-6 p-4 text-center text-gray-400 text-sm">
-    📡 Projeto simples para análise de servidores Minecraft
-  </footer>
+  </div>
 
   <script>
-    const API = 'https://api.mcsrvstat.us/2/';
-    const info = document.getElementById('serverInfo');
-    const input = document.getElementById('serverInput');
-    const btn = document.getElementById('checkBtn');
+    const toast = document.getElementById("toast");
+    const modal = document.getElementById("modal");
+    const closeModal = document.getElementById("closeModal");
 
-    async function fetchServer(host) {
-      if (!host) return;
-      info.classList.remove('hidden');
-      info.innerHTML = '<p>⏳ A carregar...</p>';
+    // Abrir modal ao clicar no toast
+    toast.addEventListener("click", () => {
+      modal.classList.remove("hidden");
+    });
 
-      try {
-        const r = await fetch(API + encodeURIComponent(host));
-        const data = await r.json();
+    // Fechar modal
+    closeModal.addEventListener("click", () => {
+      modal.classList.add("hidden");
+    });
 
-        info.innerHTML = `
-          <h2 class="text-2xl font-bold text-indigo-400 mb-3">${host}</h2>
-          <p>Status: ${data.online ? '🟢 Online' : '🔴 Offline'}</p>
-          ${data.online ? `
-            <p>Jogadores: ${data.players.online} / ${data.players.max}</p>
-            <p>Versão: ${data.version || 'Desconhecida'}</p>
-            <p>MOTD: ${data.motd?.clean?.join('<br>') || ''}</p>
-            <p>Endereço: ${data.ip}:${data.port}</p>
-            <p class="mt-2 text-xs text-gray-400">Última atualização: ${new Date().toLocaleTimeString()}</p>
-          ` : ''}
-        `;
-      } catch {
-        info.innerHTML = '<p class="text-red-500">Erro ao buscar informações do servidor.</p>';
+    // Fechar modal ao clicar fora
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
       }
-    }
-
-    btn.addEventListener('click', () => {
-      fetchServer(input.value.trim());
     });
   </script>
+
 </body>
 </html>
