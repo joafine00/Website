@@ -3,175 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Server Status | UniversoCraft</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Calculadora de Ping Estimado</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+<body>
+  <div class="container">
+    <h1>🌍 Calculadora de Ping Estimado</h1>
+    <p>Digite o IP ou domínio de um servidor Minecraft e veja o ping estimado baseado na distância entre países.</p>
 
-  <!-- Banner principal -->
-  <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 shadow-md flex justify-between items-center">
-    <div class="text-center w-full">
-      <h1 class="text-3xl font-bold">🌌 Minecraft Server Status</h1>
-      <p class="text-sm">Verifica em tempo real qualquer servidor</p>
-    </div>
-    <!-- Botão Discord -->
-    <a href="https://discord.gg/tHjnzrHpdV" target="_blank" 
-       class="ml-4 bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-full font-semibold shadow">
-      💬 Discord
-    </a>
+    <input type="text" id="serverIp" placeholder="Ex: hypixel.net">
+    <button onclick="analisarServidor()">Analisar</button>
+
+    <div id="serverInfo"></div>
   </div>
 
-  <div class="max-w-3xl mx-auto p-6">
-
-    <!-- ANÚNCIO POPUP -->
-    <div id="popup" class="fixed bottom-5 right-5 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl shadow-lg p-4 hidden z-50">
-      <h2 class="text-lg font-bold">🌟 UniversoCraft</h2>
-      <p class="text-sm">O maior servidor espanhol de Minecraft!<br>SkyWars ⚔️ Survival 🌍 BedWars 🛡️</p>
-      <p class="font-mono text-sm bg-black text-yellow-300 px-2 py-1 rounded mt-2 inline-block">
-        IP: <b>mc.universocraft.com</b>
-      </p>
-      <div class="mt-2">
-        <a href="https://universocraft.com" target="_blank" 
-           class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full font-semibold transition">
-          🚀 Jogar Agora
-        </a>
-      </div>
-    </div>
-
-    <script>
-      setInterval(() => {
-        const popup = document.getElementById("popup");
-        popup.classList.toggle("hidden");
-        setTimeout(() => popup.classList.add("hidden"), 8000);
-      }, 20000);
-    </script>
-    <!-- FIM POPUP -->
-
-    <h2 class="text-2xl font-semibold mb-6 text-center">Verificar Servidor</h2>
-
-    <div class="flex gap-2 mb-4">
-      <input id="serverInput" type="text" placeholder="Digite o IP do servidor (ex: play.hypixel.net)" class="flex-1 border rounded p-2 text-black">
-      <button id="checkBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded">Verificar</button>
-    </div>
-
-    <!-- Controle de intervalo -->
-    <div class="flex items-center gap-2 mb-4">
-      <label for="intervalSelect" class="text-sm">Atualizar a cada:</label>
-      <select id="intervalSelect" class="border rounded p-1 text-black">
-        <option value="15000">15s</option>
-        <option value="30000" selected>30s</option>
-        <option value="60000">60s</option>
-      </select>
-    </div>
-
-    <div id="serverInfo" class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 hidden"></div>
-  </div>
-
-  <footer class="bg-gray-800 text-gray-300 text-center p-4 mt-6">
-    <p>🌍 Projeto Open Source | Divulgação patrocinada: UniversoCraft</p>
-    <p class="mt-1">
-      💬 Junta-te ao nosso <a href="https://discord.gg/tHjnzrHpdV" target="_blank" class="text-blue-400 underline">Discord</a>
-    </p>
-  </footer>
-
+  <script src="ping-estimado.js"></script>
   <script>
-    const API = 'https://api.mcsrvstat.us/2/';
-    const GEO = 'http://ip-api.com/json/';
-    const input = document.getElementById('serverInput');
-    const btn = document.getElementById('checkBtn');
-    const info = document.getElementById('serverInfo');
-    const intervalSelect = document.getElementById('intervalSelect');
-    let refreshInterval;
-    let userCoords = null;
+    async function analisarServidor() {
+      const ip = document.getElementById("serverIp").value.trim();
+      if (!ip) {
+        alert("Por favor insere um IP ou domínio!");
+        return;
+      }
 
-    // Mapa de países principais com coordenadas
-    const countryCoords = {
-      "United States": { lat: 39.8283, lon: -98.5795 },
-      "Canada": { lat: 43.6532, lon: -79.3832 },
-      "Brazil": { lat: -23.5505, lon: -46.6333 },
-      "Germany": { lat: 52.52, lon: 13.4050 },
-      "France": { lat: 48.8566, lon: 2.3522 },
-      "Netherlands": { lat: 52.3676, lon: 4.9041 },
-      "United Kingdom": { lat: 51.5074, lon: -0.1278 },
-      "Spain": { lat: 40.4168, lon: -3.7038 },
-      "Portugal": { lat: 38.7169, lon: -9.1390 },
-      "Sweden": { lat: 59.3293, lon: 18.0686 },
-      "Poland": { lat: 52.2297, lon: 21.0122 },
-      "Czechia": { lat: 50.0755, lon: 14.4378 },
-      "Singapore": { lat: 1.3521, lon: 103.8198 },
-      "Japan": { lat: 35.6895, lon: 139.6917 },
-      "Australia": { lat: -33.8688, lon: 151.2093 },
-    };
+      document.getElementById("serverInfo").innerHTML = "<p>🔎 A analisar...</p>";
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude },
-        () => console.warn("Localização não autorizada.")
-      );
-    }
+      const result = await calcularPingEstimado(ip);
 
-    btn.addEventListener('click', () => {
-      clearInterval(refreshInterval);
-      fetchServer(input.value.trim());
-      refreshInterval = setInterval(() => fetchServer(input.value.trim()), parseInt(intervalSelect.value));
-    });
-
-    function haversine(lat1, lon1, lat2, lon2) {
-      const R = 6371;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    async function fetchServer(host) {
-      if (!host) return;
-      info.innerHTML = '<p>A carregar...</p>';
-      info.classList.remove('hidden');
-
-      try {
-        const r = await fetch(API + encodeURIComponent(host));
-        if (!r.ok) throw new Error('Falha no pedido');
-        const data = await r.json();
-
-        let geoData = null;
-        try {
-          const g = await fetch(GEO + data.ip);
-          if (g.ok) geoData = await g.json();
-        } catch (e) {
-          console.warn("Geo lookup falhou");
-        }
-
-        // Calcular ping estimado com base nos países
-        let pingEstimado = null;
-        if (userCoords && geoData && geoData.country) {
-          const serverCountry = geoData.country;
-          if (countryCoords[serverCountry]) {
-            const serverPos = countryCoords[serverCountry];
-            const dist = haversine(userCoords.lat, userCoords.lon, serverPos.lat, serverPos.lon);
-            pingEstimado = Math.round(dist / 2 + 20);
-          }
-        }
-
-        info.innerHTML = `
-          <h2 class="text-xl font-semibold mb-2">${host}</h2>
-          <p>Status: ${data.online ? '<span class="text-green-500">🟢 Online</span>' : '<span class="text-red-500">🔴 Offline</span>'}</p>
-          ${data.online ? `
-            <p>Jogadores: ${data.players.online} / ${data.players.max}</p>
-            <p>Versão: ${data.version || 'Desconhecida'}</p>
-            <p>MOTD: ${data.motd && data.motd.clean ? data.motd.clean.join('<br>') : ''}</p>
-            <p>Endereço: ${data.ip}:${data.port}</p>
-            <div class="mt-2">Ping: ${pingEstimado ? pingEstimado + ' ms (estimado)' : '<span class="text-gray-500">Não disponível</span>'}</div>
-            ${geoData ? `<p class="mt-2">🌍 Localização do servidor: ${geoData.country}${geoData.city ? ', ' + geoData.city : ''}</p>` : ''}
-            ${userCoords ? `<p>📍 A tua localização: Lat ${userCoords.lat.toFixed(2)}, Lon ${userCoords.lon.toFixed(2)}</p>` : ''}
-            <p class="mt-2 text-sm text-gray-400">Última atualização: ${new Date().toLocaleTimeString()}</p>
-          ` : ''}
+      if (result.ping) {
+        document.getElementById("serverInfo").innerHTML = `
+          <h2>Resultado:</h2>
+          <p>🌍 Teu país: <b>${result.userCountry}</b></p>
+          <p>🖥️ País do servidor: <b>${result.serverCountry}</b></p>
+          <p>📡 Ping Estimado: <b>${result.ping} ms</b></p>
         `;
-      } catch (e) {
-        info.innerHTML = '<p class="text-red-500">Erro ao buscar informações do servidor.</p>';
+      } else {
+        document.getElementById("serverInfo").innerHTML = `
+          <h2>Resultado:</h2>
+          <p>❌ Não foi possível calcular o ping estimado.</p>
+        `;
       }
     }
   </script>
