@@ -74,6 +74,38 @@
     </div>
   </div>
 
+  <!-- Botão flutuante de suporte -->
+  <div id="chatButton" 
+       class="fixed bottom-6 left-6 bg-blue-600 hover:bg-blue-500 text-white p-4 rounded-full shadow-lg cursor-pointer">
+    💡
+  </div>
+
+  <!-- Janela do Chat -->
+  <div id="chatWindow" class="hidden fixed bottom-20 left-6 w-80 bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex flex-col">
+    <!-- Cabeçalho -->
+    <div class="bg-blue-600 text-white p-3 rounded-t-2xl flex justify-between items-center">
+      <h3 class="font-bold">🤖 Suporte</h3>
+      <button id="closeChat" class="hover:text-gray-200">✖</button>
+    </div>
+
+    <!-- Área de mensagens -->
+    <div id="chatMessages" class="p-3 h-64 overflow-y-auto text-sm space-y-2">
+      <p class="text-gray-500">Selecione uma pergunta abaixo 👇</p>
+    </div>
+
+    <!-- Perguntas pré-definidas -->
+    <div class="p-3 border-t dark:border-gray-700">
+      <select id="questionSelect" class="w-full p-2 rounded border text-black">
+        <option value="">-- Escolha uma pergunta --</option>
+        <option value="ip">📡 Qual o IP do servidor?</option>
+        <option value="jogar">🎮 Como posso jogar?</option>
+        <option value="mods">⚙️ Precisa de mods?</option>
+        <option value="discord">💬 Como entro no Discord?</option>
+      </select>
+      <button id="sendQuestion" class="mt-2 w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded">Perguntar</button>
+    </div>
+  </div>
+
   <footer class="bg-gray-800 text-gray-300 text-center p-4 mt-6">
     <p>🌍 Projeto Open Source | Divulgação patrocinada: UniversoCraft</p>
     <p class="mt-1">
@@ -125,6 +157,43 @@
 
     popup.addEventListener('click', () => modal.classList.remove('hidden'));
     closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+
+    // Chat de Suporte
+    const chatBtn = document.getElementById('chatButton');
+    const chatWin = document.getElementById('chatWindow');
+    const closeChat = document.getElementById('closeChat');
+    const sendQ = document.getElementById('sendQuestion');
+    const selectQ = document.getElementById('questionSelect');
+    const chatMessages = document.getElementById('chatMessages');
+
+    // Respostas pré-definidas
+    const respostas = {
+      ip: "🌐 O IP oficial é: <b>mc.universocraft.com</b>",
+      jogar: "🎮 Basta abrir o Minecraft, clicar em Multijogador e adicionar o IP do servidor.",
+      mods: "⚙️ Não, o servidor não exige mods. Apenas Minecraft original ou compatível.",
+      discord: "💬 Nosso Discord: <a href='https://discord.gg/tHjnzrHpdV' target='_blank' class='text-blue-500 underline'>Clique aqui</a>"
+    };
+
+    // Abrir e fechar chat
+    chatBtn.addEventListener('click', () => chatWin.classList.remove('hidden'));
+    closeChat.addEventListener('click', () => chatWin.classList.add('hidden'));
+
+    // Enviar pergunta
+    sendQ.addEventListener('click', () => {
+      const value = selectQ.value;
+      if (!value) return;
+
+      // Mensagem do usuário
+      chatMessages.innerHTML += `<div class="text-right"><p class="bg-blue-100 dark:bg-blue-700 inline-block px-3 py-1 rounded-lg">${selectQ.options[selectQ.selectedIndex].text}</p></div>`;
+
+      // Resposta da "IA"
+      setTimeout(() => {
+        chatMessages.innerHTML += `<div class="text-left"><p class="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-lg">${respostas[value]}</p></div>`;
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }, 600);
+
+      selectQ.value = "";
+    });
   </script>
 </body>
 </html>
