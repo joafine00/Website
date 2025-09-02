@@ -124,9 +124,8 @@
       if (!user || !server) return null;
       const dist = haversine(user.lat, user.lon, server.lat, server.lon);
 
-      // Regra: ping base de 15 ms + 1 ms a cada 2 km
-      const ping = Math.round(15 + dist / 2);
-      return ping;
+      // Regra fixa: ping base de 15 ms + 1 ms a cada 2 km
+      return Math.round(15 + dist / 2);
     }
 
     async function fetchServer(host) {
@@ -147,19 +146,12 @@
           console.warn("Geo lookup falhou");
         }
 
-        let pingReal = (data.debug && typeof data.debug.ping === 'number') ? data.debug.ping : null;
+        // Sempre usa a estimativa de ping
         let pingEstimado = (userCoords && geoData && geoData.lat && geoData.lon) ? 
             estimatePing(userCoords, { lat: geoData.lat, lon: geoData.lon }) : null;
 
-        let pingDisplay = "";
-        if (pingReal) {
-          pingDisplay = renderPingBars(pingReal) + 
-            (pingEstimado ? `<p class="text-xs text-gray-400">Estimado: ~${pingEstimado} ms</p>` : "");
-        } else if (pingEstimado) {
-          pingDisplay = renderPingBars(pingEstimado);
-        } else {
-          pingDisplay = '<span class="text-gray-500">Não disponível</span>';
-        }
+        let pingDisplay = pingEstimado ? renderPingBars(pingEstimado) + `<p class="text-xs text-gray-400">(estimado)</p>`
+                                       : '<span class="text-gray-500">Não disponível</span>';
 
         info.innerHTML = `
           <h2 class="text-xl font-semibold mb-2">${host}</h2>
