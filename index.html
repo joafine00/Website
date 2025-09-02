@@ -123,7 +123,10 @@
     function estimatePing(user, server) {
       if (!user || !server) return null;
       const dist = haversine(user.lat, user.lon, server.lat, server.lon);
-      return Math.round(dist / 200 + 30);
+
+      // Regra: ping base de 15 ms + 1 ms a cada 2 km
+      const ping = Math.round(15 + dist / 2);
+      return ping;
     }
 
     async function fetchServer(host) {
@@ -144,9 +147,18 @@
           console.warn("Geo lookup falhou");
         }
 
-        let ping = (data.debug && typeof data.debug.ping === 'number') ? data.debug.ping : null;
-        if (!ping && userCoords && geoData && geoData.lat && geoData.lon) {
-          ping = estimatePing(userCoords, { lat: geoData.lat, lon: geoData.lon });
+        let pingReal = (data.debug && typeof data.debug.ping === 'number') ? data.debug.ping : null;
+        let pingEstimado = (userCoords && geoData && geoData.lat && geoData.lon) ? 
+            estimatePing(userCoords, { lat: geoData.lat, lon: geoData.lon }) : null;
+
+        let pingDisplay = "";
+        if (pingReal) {
+          pingDisplay = renderPingBars(pingReal) + 
+            (pingEstimado ? `<p class="text-xs text-gray-400">Estimado: ~${pingEstimado} ms</p>` : "");
+        } else if (pingEstimado) {
+          pingDisplay = renderPingBars(pingEstimado);
+        } else {
+          pingDisplay = '<span class="text-gray-500">Não disponível</span>';
         }
 
         info.innerHTML = `
@@ -157,7 +169,7 @@
             <p><b>Versão:</b> ${data.version || 'Desconhecida'}</p>
             <p><b>MOTD:</b><br>${data.motd && data.motd.clean ? data.motd.clean.join('<br>') : 'N/A'}</p>
             <p><b>Endereço:</b> ${data.ip}:${data.port}</p>
-            <div class="mt-2"><b>Ping:</b> ${ping ? renderPingBars(ping) : '<span class="text-gray-500">Não disponível</span>'}</div>
+            <div class="mt-2"><b>Ping:</b> ${pingDisplay}</div>
             ${geoData ? `<p class="mt-2">🌍 Localização do servidor: ${geoData.country}, ${geoData.city || '---'}</p>` : ''}
             ${userCoords ? `<p>📍 A tua localização: Lat ${userCoords.lat.toFixed(2)}, Lon ${userCoords.lon.toFixed(2)}</p>` : ''}
             <p class="mt-2 text-sm text-gray-400">Última atualização: ${new Date().toLocaleTimeString()}</p>
