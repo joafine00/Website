@@ -14,6 +14,7 @@
       <h1 class="text-3xl font-bold">🌌 Minecraft Server Status</h1>
       <p class="text-sm">Verifica em tempo real qualquer servidor</p>
     </div>
+    <!-- Botão Discord -->
     <a href="https://discord.gg/tHjnzrHpdV" target="_blank" 
        class="ml-4 bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-full font-semibold shadow">
       💬 Discord
@@ -22,20 +23,24 @@
 
   <div class="max-w-3xl mx-auto p-6">
 
-    <!-- Anúncio -->
-    <div id="popup" class="fixed bottom-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl shadow-xl p-4 animate-bounce hidden">
+    <!-- ANÚNCIO DE DIVULGAÇÃO (popup flutuante) -->
+    <div id="popup" class="hidden fixed bottom-5 right-5 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 rounded-2xl shadow-xl p-4 animate-bounce z-50">
       <h2 class="text-lg font-bold">🌟 Patrocinado por UniversoCraft</h2>
-      <p>O maior servidor espanhol de Minecraft!</p>
-      <p class="font-mono text-sm bg-black text-yellow-300 px-3 py-1 rounded-lg inline-block mt-1">
-        IP: mc.universocraft.com
+      <p class="text-sm">O maior servidor espanhol de Minecraft!</p>
+      <p class="font-mono text-sm bg-black text-yellow-300 px-2 py-1 rounded-lg inline-block mt-1">
+        IP: <b>mc.universocraft.com</b>
       </p>
-      <div class="mt-2">
-        <a href="https://universocraft.com" target="_blank" 
-           class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full font-semibold transition">
-          🚀 Jogar Agora
-        </a>
-      </div>
+      <a href="https://universocraft.com" target="_blank" 
+         class="block mt-2 bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-full font-semibold transition text-center">
+        🚀 Jogar Agora
+      </a>
+      <button onclick="document.getElementById('popup').classList.add('hidden')" class="absolute top-1 right-2 text-black">✖</button>
     </div>
+    <script>
+      // Mostrar popup automaticamente após 5s
+      setTimeout(() => document.getElementById('popup').classList.remove('hidden'), 5000);
+    </script>
+    <!-- FIM POPUP -->
 
     <h2 class="text-2xl font-semibold mb-6 text-center">Verificar Servidor</h2>
 
@@ -66,42 +71,28 @@
     const input = document.getElementById('serverInput');
     const btn = document.getElementById('checkBtn');
     const info = document.getElementById('serverInfo');
-    const popup = document.getElementById('popup');
     let refreshInterval;
     let userCoords = null;
 
-    // Pedir localização do utilizador
-    function pedirLocalizacao() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-            console.log("Localização capturada:", userCoords);
-          },
-          err => {
-            console.warn("Localização não autorizada:", err);
-            alert("⚠️ Ativa a localização para calcular o ping estimado!");
-          }
-        );
-      }
+    // Função Haversine
+    function haversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
     }
-    pedirLocalizacao();
 
-    // Mostrar popup após 3 segundos
-    setTimeout(() => { popup.classList.remove("hidden"); }, 3000);
-    setTimeout(() => { popup.classList.add("hidden"); }, 12000);
+    // Estimativa de ping: 2km = +1ms, base 30ms
+    function estimatePing(user, server) {
+      if (!user || !server) return null;
+      const dist = haversine(user.lat, user.lon, server.lat, server.lon);
+      return Math.round(dist / 2 + 30);
+    }
 
-    btn.addEventListener('click', () => {
-      clearInterval(refreshInterval);
-      fetchServer(input.value.trim());
-
-      const interval = parseInt(document.getElementById('intervalSelect').value);
-      if (interval > 0) {
-        refreshInterval = setInterval(() => fetchServer(input.value.trim()), interval);
-      }
-    });
-
-    // Função para barras de ping
     function renderPingBars(ping) {
       let level;
       if (ping <= 100) level = 5;
@@ -117,26 +108,7 @@
       return `<div class="flex items-center gap-2"><div class="flex items-end">${bars}</div><span class="text-sm text-gray-500">${ping} ms</span></div>`;
     }
 
-    // Distância entre dois pontos
-    function haversine(lat1, lon1, lat2, lon2) {
-      const R = 6371;
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    // Estimar ping baseado em distância
-    function estimatePing(user, server) {
-      if (!user || !server) return null;
-      const dist = haversine(user.lat, user.lon, server.lat, server.lon);
-      return Math.round(15 + dist / 2); // 15ms base + 1ms a cada 2km
-    }
-
-    // Buscar dados do servidor
+    // Função principal
     async function fetchServer(host) {
       if (!host) return;
       info.innerHTML = '<p>A carregar...</p>';
@@ -179,9 +151,33 @@
           ` : ''}
         `;
       } catch (e) {
+        console.error(e);
         info.innerHTML = '<p class="text-red-500">Erro ao buscar informações do servidor.</p>';
       }
     }
+
+    // Sempre pede localização antes de verificar
+    btn.addEventListener('click', () => {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          console.log("Localização capturada:", userCoords);
+
+          clearInterval(refreshInterval);
+          fetchServer(input.value.trim());
+
+          const interval = parseInt(document.getElementById('intervalSelect').value);
+          if (interval > 0) {
+            refreshInterval = setInterval(() => fetchServer(input.value.trim()), interval);
+          }
+        },
+        err => {
+          console.warn("Localização não autorizada:", err);
+          alert("⚠️ Ativa a localização no navegador para calcular o ping!");
+          fetchServer(input.value.trim()); // ainda mostra info sem ping
+        }
+      );
+    });
   </script>
 </body>
 </html>
