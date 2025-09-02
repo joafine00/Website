@@ -2,49 +2,46 @@
 <html lang="pt">
   <head>
   <!-- CSP: bloqueia scripts não autorizados -->
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' https:;
-    style-src 'self' 'unsafe-inline' https:;
-    img-src 'self' data: https:;
-    font-src 'self' https:;
-    connect-src 'self' https:;
-    frame-ancestors 'none';
-    object-src 'none';
-    base-uri 'self';
-    upgrade-insecure-requests;
-  ">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https:;
+  style-src 'self' 'unsafe-inline' https:;
+  img-src 'self' data: https:;
+  font-src 'self' https:;
+  connect-src 'self' https:;
+  frame-ancestors 'none';
+  object-src 'none';
+  base-uri 'self';
+  upgrade-insecure-requests;
+">
 
-  <!-- X-Content-Type-Options -->
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+<!-- X-Content-Type-Options -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
 
-  <!-- X-Frame-Options -->
-  <meta http-equiv="X-Frame-Options" content="DENY">
+<!-- X-Frame-Options -->
+<meta http-equiv="X-Frame-Options" content="DENY">
 
-  <!-- Referrer-Policy -->
-  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+<!-- Referrer-Policy -->
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 
-  <!-- Permissions Policy (bloqueia APIs do browser que não usas) -->
-  <meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=()">
-  </head>
-  
-<head>
-  <script>
+<!-- Permissions Policy (bloqueia APIs do browser que não usas) -->
+<meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=()">
+
+<!-- reCAPTCHA -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<script>
+  // Bloqueia clique direito
   document.addEventListener("contextmenu", e => e.preventDefault());
-  </script>
-  <html>
-  <head>
-    <title>reCAPTCHA demo: Simple page</title>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-  </head>
-  <body>
-    <form action="?" method="POST">
-      <div class="g-recaptcha" data-sitekey="your_site_key"></div>
-      <br/>
-      <input type="submit" value="Submit">
-    </form>
-  </body>
-  </html>
+
+  function verifiedUser() {
+    // Aqui validarias no backend normalmente
+    document.getElementById("verifyScreen").style.display = "none";
+    document.getElementById("siteContent").style.display = "block";
+    return false;
+  }
+</script>
+    
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minecraft Server Analystic</title>
