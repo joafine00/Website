@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema de Avaliação</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(180deg, #e0f2fe, #f8fafc);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      max-width: 500px;
+      width: 100%;
+      animation: fadeIn 0.7s ease;
+    }
+    h1 {
+      margin: 0 0 20px;
+      font-size: 26px;
+      text-align: center;
+      color: #0f172a;
+    }
+    label { display:block; margin: 18px 0 6px; font-weight: 600; }
+    input, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font: inherit;
+      transition: border .2s;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    .stars {
+      display: flex;
+      gap: 10px;
+      font-size: 36px;
+      justify-content: center;
+      margin: 10px 0;
+    }
+    .star {
+      cursor: pointer;
+      transition: transform 0.2s, color 0.3s;
+      color: #94a3b8;
+      user-select: none;
+    }
+    .star.active {
+      color: #facc15;
+      transform: scale(1.2);
+    }
+    .btn {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+    }
+    .btn:hover { background: #1d4ed8; }
+    .btn:active { transform: scale(0.98); }
+    .msg {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 12px;
+      display: none;
+      font-size: 14px;
+    }
+    .msg.ok { background: #ecfdf5; color:#065f46; display: block; }
+    .msg.err { background: #fef2f2; color:#7f1d1d; display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Envie sua Avaliação</h1>
+    <form id="reportForm">
+      <label for="title">Título</label>
+      <input type="text" id="title" name="title" placeholder="Ex: Atendimento rápido" required>
+
+      <label>Avaliação</label>
+      <div class="stars" id="stars"></div>
+      <input type="hidden" id="rating" name="rating" required>
+
+      <label for="comment">Comentário</label>
+      <textarea id="comment" name="comment" placeholder="Escreva seu comentário..." required></textarea>
+
+      <button class="btn" type="submit">Enviar</button>
+      <div id="feedback" class="msg"></div>
+    </form>
+  </div>
+
+  <script>
+    // ⭐ Estrelas animadas
+    const starsEl = document.getElementById("stars");
+    const ratingInput = document.getElementById("rating");
+    let current = 0;
+
+    function renderStars() {
+      starsEl.innerHTML = "";
+      for (let i = 1; i <= 5; i++) {
+        const span = document.createElement("span");
+        span.className = "star" + (i <= current ? " active" : "");
+        span.textContent = "★";
+        span.addEventListener("click", () => {
+          current = i;
+          ratingInput.value = i;
+          renderStars();
+        });
+        starsEl.appendChild(span);
+      }
+    }
+    renderStars();
+
+    // 📩 Envio (simulado - precisa de backend para mandar e-mail real!)
+    document.getElementById("reportForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const feedback = document.getElementById("feedback");
+      // Aqui deveria chamar o backend com fetch("/api/report")
+      feedback.className = "msg ok";
+      feedback.textContent = "Avaliação enviada com sucesso! (exemplo)";
+    });
+
+    // 🔒 Bloqueio básico (não é proteção real!)
+    document.addEventListener("contextmenu", e => e.preventDefault());
+    document.addEventListener("keydown", e => {
+      if (
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && ["I","C","J"].includes(e.key.toUpperCase())) ||
+        (e.ctrlKey && e.key.toUpperCase() === "U")
+      ) {
+        e.preventDefault();
+      }
+    });
+  </script>
+</body>
+</html>
