@@ -3,66 +3,75 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sistema de Avaliação</title>
+  <title>Avaliação</title>
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(180deg, #e0f2fe, #f8fafc);
+      background: linear-gradient(135deg, #60a5fa, #2563eb);
+      min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 40px 20px;
+      align-items: center;
+      padding: 20px;
     }
     .card {
       background: #fff;
       padding: 30px;
       border-radius: 20px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
       max-width: 500px;
       width: 100%;
-      animation: fadeIn 0.7s ease;
+      animation: fadeIn 0.8s ease;
     }
     h1 {
       margin: 0 0 20px;
-      font-size: 26px;
+      font-size: 28px;
       text-align: center;
-      color: #0f172a;
+      color: #1e293b;
     }
-    label { display:block; margin: 18px 0 6px; font-weight: 600; }
+    label {
+      display: block;
+      margin: 16px 0 6px;
+      font-weight: 600;
+      color: #334155;
+    }
     input, textarea {
       width: 100%;
       padding: 12px 14px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #cbd5e1;
       border-radius: 12px;
       font: inherit;
-      transition: border .2s;
+      transition: border .2s, box-shadow .2s;
     }
     input:focus, textarea:focus {
       outline: none;
       border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.2);
     }
-    textarea { min-height: 100px; resize: vertical; }
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
     .stars {
       display: flex;
       gap: 10px;
-      font-size: 36px;
+      font-size: 38px;
       justify-content: center;
-      margin: 10px 0;
+      margin: 12px 0;
     }
     .star {
       cursor: pointer;
       transition: transform 0.2s, color 0.3s;
-      color: #94a3b8;
+      color: #cbd5e1;
       user-select: none;
     }
     .star.active {
       color: #facc15;
-      transform: scale(1.2);
+      transform: scale(1.2) rotate(-5deg);
     }
     .btn {
-      margin-top: 20px;
+      margin-top: 22px;
       width: 100%;
       padding: 14px;
       border: none;
@@ -75,28 +84,19 @@
       transition: background 0.3s, transform 0.1s;
     }
     .btn:hover { background: #1d4ed8; }
-    .btn:active { transform: scale(0.98); }
-    .msg {
-      margin-top: 14px;
-      padding: 12px;
-      border-radius: 12px;
-      display: none;
-      font-size: 14px;
-    }
-    .msg.ok { background: #ecfdf5; color:#065f46; display: block; }
-    .msg.err { background: #fef2f2; color:#7f1d1d; display: block; }
+    .btn:active { transform: scale(0.97); }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(25px); }
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Envie sua Avaliação</h1>
-    <form id="reportForm">
+    <h1>Deixe sua Avaliação</h1>
+    <form action="https://formsubmit.co/joafine@proton.me" method="POST">
       <label for="title">Título</label>
-      <input type="text" id="title" name="title" placeholder="Ex: Atendimento rápido" required>
+      <input type="text" id="title" name="title" placeholder="Ex: Atendimento excelente" required>
 
       <label>Avaliação</label>
       <div class="stars" id="stars"></div>
@@ -105,8 +105,11 @@
       <label for="comment">Comentário</label>
       <textarea id="comment" name="comment" placeholder="Escreva seu comentário..." required></textarea>
 
+      <!-- Formsubmit opções -->
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_template" value="table">
+
       <button class="btn" type="submit">Enviar</button>
-      <div id="feedback" class="msg"></div>
     </form>
   </div>
 
@@ -131,27 +134,6 @@
       }
     }
     renderStars();
-
-    // 📩 Envio (simulado - precisa de backend para mandar e-mail real!)
-    document.getElementById("reportForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      const feedback = document.getElementById("feedback");
-      // Aqui deveria chamar o backend com fetch("/api/report")
-      feedback.className = "msg ok";
-      feedback.textContent = "Avaliação enviada com sucesso! (exemplo)";
-    });
-
-    // 🔒 Bloqueio básico (não é proteção real!)
-    document.addEventListener("contextmenu", e => e.preventDefault());
-    document.addEventListener("keydown", e => {
-      if (
-        e.key === "F12" ||
-        (e.ctrlKey && e.shiftKey && ["I","C","J"].includes(e.key.toUpperCase())) ||
-        (e.ctrlKey && e.key.toUpperCase() === "U")
-      ) {
-        e.preventDefault();
-      }
-    });
   </script>
 </body>
 </html>
