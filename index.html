@@ -98,6 +98,28 @@
     return false;
   }
 </script>
+    <!-- Modal de Aceitação de Termos -->
+<div id="termsModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,0.8);display:flex;justify-content:center;align-items:center;z-index:9999;">
+  <div style="background-color:white;padding:20px;max-width:500px;width:90%;border-radius:8px;text-align:center;">
+    <h2>Aceite os Termos</h2>
+    <p>Para acessar este site, você precisa concordar com os nossos Termos e Condições.</p>
+    <p><a href="https://website-neon-xi-32.vercel.app/terms.txt" target="_blank" style="color:blue;">Clique aqui para ler os termos completos</a></p>
+    <button id="acceptTerms" style="padding:10px 20px;margin-top:15px;cursor:pointer;">Aceitar</button>
+  </div>
+</div>
+
+<script>
+// Verifica se o usuário já aceitou os termos
+if(localStorage.getItem('termsAccepted') === 'true'){
+  document.getElementById('termsModal').style.display = 'none';
+}
+
+document.getElementById('acceptTerms').addEventListener('click', function(){
+  localStorage.setItem('termsAccepted','true'); // salva no navegador
+  document.getElementById('termsModal').style.display = 'none';
+});
+</script>
+    
     
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
