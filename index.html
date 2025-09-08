@@ -281,18 +281,19 @@
     closeChat.addEventListener('click', () => chatWin.classList.add('hidden'));
 
     sendQ.addEventListener('click', () => {
-      const value = selectQ.value;
-      if (!value) return;
+  const value = selectQ.value;
+  if (!value) return;
 
-      chatMessages.innerHTML += `<div class="text-right"><p class="bg-blue-100 dark:bg-blue-700 inline-block px-3 py-1 rounded-lg">${selectQ.options[selectQ.selectedIndex].text}</p></div>`;
+  chatMessages.innerHTML += `<div class="text-right"><p class="bg-blue-100 dark:bg-blue-700 inline-block px-3 py-1 rounded-lg">${selectQ.options[selectQ.selectedIndex].text}</p></div>`;
 
-      setTimeout(() => {
-        chatMessages.innerHTML += `<div class="text-left"><p class="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-lg">${respostas[value]}</p></div>`;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }, 600);
+  setTimeout(() => {
+    chatMessages.innerHTML += `<div class="text-left"><p class="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded-lg">${respostas[value]}</p></div>`;
+    chatMessages.scrollTop = chatMessages.scrollHeight; // ✅ corrigido
+  }, 600);
 
-      selectQ.value = "";
-    });
+  selectQ.value = "";
+});
+    
   </script>
 </body>
 </html>
