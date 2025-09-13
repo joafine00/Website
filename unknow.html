@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Meusite — Secreto</title>
+  <style>
+    :root{--bg:#f6f7fb;--card:#fff;--accent:#0b63d6;--muted:#6b7280}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial}
+    body{display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+    .card{width:min(720px,98%);background:var(--card);border-radius:12px;padding:24px;box-shadow:0 8px 30px rgba(10,10,20,.08)}
+    h1{margin:0 0 8px;font-size:20px}
+    p.small{margin:6px 0 18px;color:var(--muted);font-size:13px}
+    label{display:block;margin-top:10px;font-size:13px;color:#111}
+    input{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;margin-top:6px;box-sizing:border-box;font-size:15px}
+    button{margin-top:14px;padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600;background:var(--accent);color:#fff}
+    .danger{background:#d64141}
+    .hidden{display:none}
+    .topbar{display:flex;justify-content:space-between;align-items:center}
+    .rus{font-size:20px;margin-top:18px;font-weight:700;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div id="loginBox">
+      <div class="topbar">
+        <h1>Área Secreta</h1>
+        <button id="clearBtn" title="Remover acesso local">Limpar</button>
+      </div>
+
+      <p class="small">Para ver o conteúdo desta página é necessário inserir o nome e a senha. Isto é apenas client-side.</p>
+
+      <label for="user">Nome</label>
+      <input id="user" type="text" autocomplete="username" placeholder="nome" />
+
+      <label for="pass">Senha</label>
+      <input id="pass" type="password" autocomplete="current-password" placeholder="senha" />
+
+      <button id="loginBtn">Entrar</button>
+      <p id="msg" class="small" style="color:#d64141"></p>
+    </div>
+
+    <div id="secretContent" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h1>Conteúdo secreto</h1>
+        <div>
+          <button id="logoutBtn" class="danger">Sair</button>
+        </div>
+      </div>
+
+      <p class="small">Você não verá isto sem as credenciais corretas (novamente: isto é facilmente burlável se alguém abrir o código).</p>
+
+      <!-- Mensagem em russo -->
+      <div class="rus" lang="ru">Поздравляю, вы смогли расшифровать пароль.</div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const VALID_USER = 'admin';
+      const VALID_PASS = '#w3r';
+      const LS_KEY = 'meusite_secreto_acesso_v1';
+
+      const userInput = document.getElementById('user');
+      const passInput = document.getElementById('pass');
+      const loginBtn = document.getElementById('loginBtn');
+      const msg = document.getElementById('msg');
+      const loginBox = document.getElementById('loginBox');
+      const secretContent = document.getElementById('secretContent');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const clearBtn = document.getElementById('clearBtn');
+
+      function showSecret(){ loginBox.classList.add('hidden'); secretContent.classList.remove('hidden'); }
+      function showLogin(){ loginBox.classList.remove('hidden'); secretContent.classList.add('hidden'); }
+      function hasAccess(){ try { return localStorage.getItem(LS_KEY) === '1'; } catch(e){ return false; } }
+      function grantAccess(){ try { localStorage.setItem(LS_KEY, '1'); } catch(e){} }
+      function revokeAccess(){ try { localStorage.removeItem(LS_KEY); } catch(e){} }
+
+      if (hasAccess()) showSecret();
+      else showLogin();
+
+      loginBtn.addEventListener('click', function(){
+        const u = (userInput.value||'').trim();
+        const p = (passInput.value||'');
+        if (u === VALID_USER && p === VALID_PASS) {
+          grantAccess();
+          msg.textContent = '';
+          showSecret();
+        } else {
+          msg.textContent = 'Nome ou senha incorretos.';
+        }
+      });
+
+      [userInput, passInput].forEach(el => el.addEventListener('keydown', ev => {
+        if (ev.key === 'Enter') loginBtn.click();
+      }));
+
+      logoutBtn.addEventListener('click', function(){
+        revokeAccess();
+        userInput.value = '';
+        passInput.value = '';
+        showLogin();
+      });
+
+      clearBtn.addEventListener('click', function(){
+        revokeAccess();
+        alert('Acesso local removido. Será necessário entrar novamente.');
+        showLogin();
+      });
+
+      // Obs: qualquer usuário pode inspecionar o código e ver VALID_PASS/LS_KEY, e pode setar localStorage manualmente.
+    })();
+  </script>
+</body>
+</html>
